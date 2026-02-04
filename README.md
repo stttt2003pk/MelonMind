@@ -1,173 +1,173 @@
-# MelonMind - 网络运维智能助手
+# MelonMind - Network Operations AI Assistant
 
-基于 Django 的后台管理系统，集成 LangChain/LangGraph 智能代理和 Mulves 知识库，专为网络工程师设计的运维助手平台。
+Backend management system based on Django, integrating LangChain/LangGraph intelligent agents and Mulves knowledge base, designed as an operations assistant platform for network engineers.
 
-## 功能特性
+## Features
 
-### 🤖 智能代理 (Agents)
-- 基于 LangChain/LangGraph 的智能流程编排
-- 网络设备自动化操作
-- 配置备份与恢复
-- 健康状态监控
-- 故障自动诊断
+### 🤖 Intelligent Agents
+- Intelligent process orchestration based on LangChain/LangGraph
+- Automated network device operations
+- Configuration backup and recovery
+- Health status monitoring
+- Automatic fault diagnosis
 
-### 📚 知识库管理
-- 集成 Mulves 知识库系统
-- 智能搜索与推荐
-- 网络运维最佳实践
-- 故障排除指南
-- 配置模板库
+### 📚 Knowledge Base Management
+- Integrated Mulves knowledge base system
+- Intelligent search and recommendation
+- Network operations best practices
+- Troubleshooting guides
+- Configuration template library
 
-### 🔧 核心功能
-- RESTful API 接口
-- 异步任务处理 (Celery)
-- 权限管理与认证
-- 操作日志记录
-- 数据统计分析
+### 🔧 Core Functions
+- RESTful API interfaces
+- Asynchronous task processing (Celery)
+- Permission management and authentication
+- Operation log recording
+- Data statistics and analysis
 
-## 技术栈
+## Tech Stack
 
-- **后端框架**: Django 4.2
-- **API 框架**: Django REST Framework
-- **AI 框架**: LangChain, LangGraph
-- **知识库**: Mulves
-- **异步处理**: Celery + Redis
-- **数据库**: PostgreSQL
-- **依赖管理**: Poetry
+- **Backend Framework**: Django 5.1+
+- **API Framework**: Django REST Framework
+- **AI Framework**: LangChain, LangGraph
+- **Knowledge Base**: Mulves
+- **Async Processing**: Celery + Redis
+- **Database**: PostgreSQL
+- **Dependency Management**: Poetry
 
-## 快速开始
+## Quick Start
 
-### 1. 环境准备
+### 1. Environment Setup
 
 ```bash
-# 克隆项目
+# Clone project
 git clone <repository-url>
 cd MelonMind
 
-# 安装 Poetry (如果未安装)
+# Install Poetry (if not installed)
 curl -sSL https://install.python-poetry.org | python3 -
 
-# 安装依赖
+# Install dependencies
 poetry install
 
-# 激活虚拟环境
+# Activate virtual environment
 poetry shell
 ```
 
-### 2. 配置环境变量
+### 2. Environment Variables Configuration
 
 ```bash
-# 复制环境配置模板
+# Copy environment configuration template
 cp .env.example .env
 
-# 编辑配置文件
+# Edit configuration file
 vim .env
 ```
 
-### 3. 数据库初始化
+### 3. Database Initialization
 
 ```bash
-# 创建数据库
+# Create database
 createdb melonmind
 
-# 运行迁移
+# Run migrations
 python manage.py migrate
 
-# 创建超级用户
+# Create superuser
 python manage.py createsuperuser
 
-# 初始化知识库
+# Initialize knowledge base
 python scripts/setup_knowledge_base.py
 ```
 
-### 4. 启动服务
+### 4. Start Services
 
 ```bash
-# 启动 Django 开发服务器
+# Start Django development server
 python manage.py runserver
 
-# 启动 Celery worker (新终端)
+# Start Celery worker (new terminal)
 celery -A config worker --loglevel=info
 
-# 启动 Celery beat (新终端，如果需要定时任务)
+# Start Celery beat (new terminal, if scheduled tasks needed)
 celery -A config beat --loglevel=info
 ```
 
-## 项目结构
+## Project Structure
 
 ```
 MelonMind/
-├── config/                 # Django 配置
-├── apps/                   # 应用模块
-│   ├── agents/            # 智能代理应用
-│   ├── knowledge_base/    # 知识库应用
-│   └── common/            # 通用工具
-├── tests/                 # 测试文件
-├── scripts/               # 脚本文件
-├── logs/                  # 日志文件
-└── manage.py             # Django 管理脚本
+├── config/                 # Django configuration
+├── apps/                   # Application modules
+│   ├── agents/            # Intelligent agents application
+│   ├── knowledge_base/    # Knowledge base application
+│   └── common/            # Common utilities
+├── tests/                 # Test files
+├── scripts/               # Script files
+├── logs/                  # Log files
+└── manage.py             # Django management script
 ```
 
-## API 接口
+## API Interfaces
 
-### Agent 流程管理
-- `POST /api/agents/flows/` - 创建流程
-- `GET /api/agents/flows/` - 获取流程列表
-- `POST /api/agents/flows/{id}/execute/` - 执行流程
+### Agent Flow Management
+- `POST /api/agents/flows/` - Create flow
+- `GET /api/agents/flows/` - Get flow list
+- `POST /api/agents/flows/{id}/execute/` - Execute flow
 
-### 知识库查询
-- `POST /api/knowledge/query/search/` - 搜索知识
-- `GET /api/knowledge/entries/` - 获取知识条目
-- `POST /api/knowledge/entries/` - 创建知识条目
+### Knowledge Base Query
+- `POST /api/knowledge/query/search/` - Search knowledge
+- `GET /api/knowledge/entries/` - Get knowledge entries
+- `POST /api/knowledge/entries/` - Create knowledge entry
 
-## 开发指南
+## Development Guide
 
-### 代码规范
-- 遵循 PEP 8 Python 编码规范
-- 使用类型提示
-- 编写单元测试
+### Code Standards
+- Follow PEP 8 Python coding standards
+- Use type hints
+- Write unit tests
 
-### 测试运行
+### Running Tests
 ```bash
-# 运行所有测试
+# Run all tests
 pytest
 
-# 运行特定测试
+# Run specific tests
 pytest tests/test_agents/
 
-# 生成测试覆盖率报告
+# Generate test coverage report
 pytest --cov=apps
 ```
 
-## 部署说明
+## Deployment Instructions
 
-### 生产环境配置
-1. 设置 `DEBUG=False`
-2. 配置生产数据库
-3. 设置合适的 SECRET_KEY
-4. 配置 HTTPS
-5. 设置适当的权限和防火墙规则
+### Production Environment Configuration
+1. Set `DEBUG=False`
+2. Configure production database
+3. Set appropriate SECRET_KEY
+4. Configure HTTPS
+5. Set proper permissions and firewall rules
 
-### Docker 部署 (可选)
+### Docker Deployment (Optional)
 ```bash
-# 构建镜像
+# Build image
 docker-compose build
 
-# 启动服务
+# Start services
 docker-compose up -d
 ```
 
-## 贡献指南
+## Contribution Guidelines
 
-1. Fork 项目
-2. 创建功能分支
-3. 提交更改
-4. 发起 Pull Request
+1. Fork the project
+2. Create feature branch
+3. Commit changes
+4. Submit Pull Request
 
-## 许可证
+## License
 
 MIT License
 
-## 联系方式
+## Contact
 
-如有问题，请联系项目维护者。
+For any issues, please contact the project maintainer.
