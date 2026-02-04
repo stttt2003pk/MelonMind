@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MelonMind - Intelligent Operations Assistant</title>
+    <title>MelonMind - 智能运维助手</title>
     <style>
         * {
             margin: 0;
@@ -184,54 +184,54 @@
     <div class="container">
         <div class="header">
             <h1>🍈 MelonMind</h1>
-            <p>Intelligent Operations Assistant - Making Network Operations Simpler</p>
+            <p>智能运维助手 - 让网络运维更简单</p>
         </div>
         
         <div class="content">
             <div class="status-section">
-                <h3><span class="status-indicator"></span>System Status: Operational</h3>
-                <p>All service components have been started and are running normally</p>
+                <h3><span class="status-indicator"></span>系统运行状态：正常</h3>
+                <p>所有服务组件均已启动并正常运行</p>
             </div>
             
             <div class="features">
                 <div class="feature-card">
-                    <h3>🤖 Intelligent Agents</h3>
-                    <p>Powerful AI agent system based on LangChain and LangGraph, capable of automating complex operations tasks and providing intelligent problem-solving solutions.</p>
+                    <h3>🤖 智能代理</h3>
+                    <p>基于LangChain和LangGraph的强大AI代理系统，能够自动化处理复杂的运维任务，提供智能化的问题解决方案。</p>
                 </div>
                 
                 <div class="feature-card">
-                    <h3>📚 Knowledge Base</h3>
-                    <p>Network operations knowledge base integrated with Mulves connector, containing rich operational experience and best practices, providing reliable knowledge support for decision-making.</p>
+                    <h3>📚 知识库</h3>
+                    <p>集成Mulves连接器的网络运维知识库，包含丰富的运维经验和最佳实践，为决策提供可靠的知识支撑。</p>
                 </div>
                 
                 <div class="feature-card">
-                    <h3>⚡ Real-time Monitoring</h3>
-                    <p>Real-time monitoring of system status and performance metrics, promptly detecting and alerting potential issues to ensure stable system operation.</p>
+                    <h3>⚡ 实时监控</h3>
+                    <p>实时监控系统状态和性能指标，及时发现并预警潜在问题，确保系统稳定运行。</p>
                 </div>
             </div>
             
             <div class="links">
-                <a href="/admin/" class="btn">Admin Panel</a>
-                <a href="/api/" class="btn btn-outline">API Documentation</a>
-                <a href="/api/health/" class="btn btn-outline">Health Check</a>
+                <a href="/admin/" class="btn">管理后台</a>
+                <a href="/api/" class="btn btn-outline">API文档</a>
+                <a href="/api/health/" class="btn btn-outline">健康检查</a>
             </div>
         </div>
         
         <div class="footer">
-            <p>&copy; 2024 MelonMind Intelligent Operations Platform | Built with Django + LangChain + Mulves</p>
+            <p>&copy; 2024 MelonMind 智能运维平台 | 基于Django + LangChain + Mulves构建</p>
         </div>
     </div>
 
     <script>
-        // Execute after page loads
+        // 页面加载完成后执行
         document.addEventListener('DOMContentLoaded', function() {
             console.log('MelonMind homepage loaded successfully');
             
-            // Additional interactive logic can be added here
+            // 可以在这里添加更多的交互逻辑
             const buttons = document.querySelectorAll('.btn');
             buttons.forEach(button => {
                 button.addEventListener('click', function(e) {
-                    // Add click effect
+                    // 添加点击效果
                     this.style.transform = 'scale(0.95)';
                     setTimeout(() => {
                         this.style.transform = '';

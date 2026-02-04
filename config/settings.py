@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'apps.agents',
     'apps.knowledge_base',
     'apps.common',
+    'apps.homepage',
 ]
 
 MIDDLEWARE = [

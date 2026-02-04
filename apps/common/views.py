@@ -9,31 +9,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def home_page(request):
-    """
-    用户友好的HTML主页 - 正常HTTP访问
-    """
-    logger.info("HTML homepage accessed")
-    context = {
-        'title': 'MelonMind - 智能运维助手',
-        'version': '1.0.0',
-        'features': [
-            {
-                'name': '智能代理',
-                'description': '基于LangChain和LangGraph的强大AI代理系统'
-            },
-            {
-                'name': '知识库',
-                'description': '集成Mulves连接器的网络运维知识库'
-            },
-            {
-                'name': '实时监控',
-                'description': '实时监控系统状态和性能指标'
-            }
-        ]
-    }
-    return render(request, 'home.html', context)
-
 @api_view(['GET'])
 def api_home(request):
     """

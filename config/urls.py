@@ -20,9 +20,10 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', include('apps.homepage.urls')),  # 主页应用
+    path('api/', include('apps.common.urls')),  # API接口保持原路径
     path('api/agents/', include('apps.agents.urls')),
     path('api/knowledge/', include('apps.knowledge_base.urls')),
-    path('api/', include('apps.common.urls')),  # 添加默认API路由
 ]
 
 # Serve media files in development
