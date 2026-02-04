@@ -22,6 +22,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/agents/', include('apps.agents.urls')),
     path('api/knowledge/', include('apps.knowledge_base.urls')),
+    path('api/', include('apps.common.urls')),  # 添加默认API路由
 ]
 
 # Serve media files in development
