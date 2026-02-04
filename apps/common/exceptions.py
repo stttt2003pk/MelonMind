@@ -1,5 +1,5 @@
 class MelonMindException(Exception):
-    """MelonMind 基础异常类"""
+    """MelonMind base exception class"""
     def __init__(self, message: str, error_code: str = ""):
         self.message = message
         self.error_code = error_code
@@ -7,37 +7,37 @@ class MelonMindException(Exception):
 
 
 class AgentFlowException(MelonMindException):
-    """Agent 流程相关异常"""
+    """Agent flow related exception"""
     pass
 
 
 class KnowledgeBaseException(MelonMindException):
-    """知识库相关异常"""
+    """Knowledge base related exception"""
     pass
 
 
 class ValidationError(MelonMindException):
-    """数据验证异常"""
+    """Data validation exception"""
     pass
 
 
 class ExternalServiceException(MelonMindException):
-    """外部服务调用异常"""
+    """External service call exception"""
     def __init__(self, service_name: str, message: str, error_code: str = ""):
         self.service_name = service_name
         super().__init__(f"{service_name}: {message}", error_code)
 
 
 class ConfigurationException(MelonMindException):
-    """配置相关异常"""
+    """Configuration related exception"""
     pass
 
 
 class AuthenticationException(MelonMindException):
-    """认证相关异常"""
+    """Authentication related exception"""
     pass
 
 
 class AuthorizationException(MelonMindException):
-    """授权相关异常"""
+    """Authorization related exception"""
     pass

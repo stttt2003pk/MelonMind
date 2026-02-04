@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 class MulvesClient:
-    """Mulves 知识库客户端"""
+    """Mulves knowledge base client"""
     
     def __init__(self):
         self.api_key = os.getenv('MULVES_API_KEY')
@@ -16,57 +16,57 @@ class MulvesClient:
         
     def search(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
         """
-        搜索知识库
+        Search knowledge base
         
         Args:
-            query: 搜索查询文本
-            limit: 返回结果数量限制
+            query: Search query text
+            limit: Limit for number of results returned
             
         Returns:
-            搜索结果列表
+            List of search results
         """
         try:
-            # 这里实现与 Mulves 的实际连接逻辑
-            # 示例返回格式：
+            # Implement actual connection logic with Mulves here
+            # Example return format:
             return [
                 {
                     'id': 'kb_001',
-                    'title': '路由器配置备份指南',
-                    'content': '如何正确备份 Cisco 路由器配置...',
+                    'title': 'Router Configuration Backup Guide',
+                    'content': 'How to properly backup Cisco router configuration...',
                     'category': 'configuration',
                     'relevance_score': 0.95,
-                    'source': 'Cisco 官方文档'
+                    'source': 'Cisco Official Documentation'
                 },
                 {
                     'id': 'kb_002',
-                    'title': '网络故障排除流程',
-                    'content': '标准的网络故障诊断步骤...',
+                    'title': 'Network Troubleshooting Process',
+                    'content': 'Standard network fault diagnosis steps...',
                     'category': 'troubleshooting',
                     'relevance_score': 0.87,
-                    'source': '内部运维手册'
+                    'source': 'Internal Operations Manual'
                 }
             ]
             
         except Exception as e:
             logger.error(f"Mulves search failed: {str(e)}")
-            raise Exception(f"知识库搜索失败: {str(e)}")
+            raise Exception(f"Knowledge base search failed: {str(e)}")
     
     def get_entry(self, entry_id: str) -> Dict[str, Any]:
         """
-        获取指定知识条目
+        Get specified knowledge entry
         
         Args:
-            entry_id: 条目ID
+            entry_id: Entry ID
             
         Returns:
-            知识条目详情
+            Knowledge entry details
         """
         try:
-            # 实现获取单个条目的逻辑
+            # Implement logic to get single entry
             return {
                 'id': entry_id,
-                'title': '示例条目',
-                'content': '这是示例内容',
+                'title': 'Sample Entry',
+                'content': 'This is sample content',
                 'category': 'network_device',
                 'tags': ['cisco', 'router'],
                 'created_at': '2024-01-01T00:00:00Z'
@@ -74,23 +74,23 @@ class MulvesClient:
             
         except Exception as e:
             logger.error(f"Failed to get entry {entry_id}: {str(e)}")
-            raise Exception(f"获取知识条目失败: {str(e)}")
+            raise Exception(f"Failed to get knowledge entry: {str(e)}")
     
     def add_entry(self, entry_data: Dict[str, Any]) -> str:
         """
-        添加新的知识条目
+        Add new knowledge entry
         
         Args:
-            entry_data: 条目数据
+            entry_data: Entry data
             
         Returns:
-            新条目的ID
+            New entry ID
         """
         try:
-            # 实现添加条目的逻辑
+            # Implement logic to add entry
             logger.info(f"Adding new knowledge entry: {entry_data.get('title')}")
             return "new_entry_id"
             
         except Exception as e:
             logger.error(f"Failed to add entry: {str(e)}")
-            raise Exception(f"添加知识条目失败: {str(e)}")
+            raise Exception(f"Failed to add knowledge entry: {str(e)}")

@@ -10,16 +10,16 @@ logger = logging.getLogger(__name__)
 def format_response(success: bool, data: Any = None, message: str = "", 
                    error_code: str = "") -> Dict[str, Any]:
     """
-    格式化API响应
+    Format API response
     
     Args:
-        success: 是否成功
-        data: 响应数据
-        message: 响应消息
-        error_code: 错误码
+        success: Whether the operation was successful
+        data: Response data
+        message: Response message
+        error_code: Error code
         
     Returns:
-        格式化的响应字典
+        Formatted response dictionary
     """
     response = {
         'success': success,
@@ -36,13 +36,13 @@ def format_response(success: bool, data: Any = None, message: str = "",
 
 def validate_json(data: str) -> bool:
     """
-    验证JSON字符串格式
+    Validate JSON string format
     
     Args:
-        data: 待验证的JSON字符串
+        data: JSON string to validate
         
     Returns:
-        是否为有效JSON
+        Whether it's valid JSON
     """
     try:
         json.loads(data)
@@ -53,14 +53,14 @@ def validate_json(data: str) -> bool:
 
 def mask_sensitive_data(data: Dict[str, Any], sensitive_keys: List[str] = None) -> Dict[str, Any]:
     """
-    掩码敏感数据
+    Mask sensitive data
     
     Args:
-        data: 原始数据字典
-        sensitive_keys: 敏感字段列表
+        data: Original data dictionary
+        sensitive_keys: List of sensitive field names
         
     Returns:
-        掩码后的数据字典
+        Data dictionary with masked sensitive fields
     """
     if sensitive_keys is None:
         sensitive_keys = ['password', 'token', 'secret', 'key']
@@ -78,13 +78,13 @@ def mask_sensitive_data(data: Dict[str, Any], sensitive_keys: List[str] = None) 
 
 def extract_ip_addresses(text: str) -> List[str]:
     """
-    从文本中提取IP地址
+    Extract IP addresses from text
     
     Args:
-        text: 输入文本
+        text: Input text
         
     Returns:
-        IP地址列表
+        List of IP addresses
     """
     ip_pattern = r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b'
     return re.findall(ip_pattern, text)
@@ -92,28 +92,28 @@ def extract_ip_addresses(text: str) -> List[str]:
 
 def calculate_execution_time(start_time: datetime, end_time: datetime) -> float:
     """
-    计算执行时间（秒）
+    Calculate execution time in seconds
     
     Args:
-        start_time: 开始时间
-        end_time: 结束时间
+        start_time: Start time
+        end_time: End time
         
     Returns:
-        执行时间（秒）
+        Execution time in seconds
     """
     return (end_time - start_time).total_seconds()
 
 
 def chunk_list(lst: List[Any], chunk_size: int) -> List[List[Any]]:
     """
-    将列表分块
+    Split list into chunks
     
     Args:
-        lst: 原始列表
-        chunk_size: 块大小
+        lst: Original list
+        chunk_size: Size of each chunk
         
     Returns:
-        分块后的列表
+        List of chunks
     """
     for i in range(0, len(lst), chunk_size):
         yield lst[i:i + chunk_size]
@@ -121,15 +121,15 @@ def chunk_list(lst: List[Any], chunk_size: int) -> List[List[Any]]:
 
 def safe_get_nested_value(data: Dict[str, Any], keys: List[str], default: Any = None) -> Any:
     """
-    安全获取嵌套字典值
+    Safely get nested dictionary value
     
     Args:
-        data: 字典数据
-        keys: 键路径列表
-        default: 默认值
+        data: Dictionary data
+        keys: List of key paths
+        default: Default value
         
     Returns:
-        获取到的值或默认值
+        Retrieved value or default value
     """
     try:
         result = data
@@ -142,13 +142,13 @@ def safe_get_nested_value(data: Dict[str, Any], keys: List[str], default: Any = 
 
 def is_valid_email(email: str) -> bool:
     """
-    验证邮箱格式
+    Validate email format
     
     Args:
-        email: 邮箱地址
+        email: Email address
         
     Returns:
-        是否为有效邮箱
+        Whether it's a valid email
     """
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None

@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.db import models
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -9,7 +10,7 @@ from .connectors.mulves_client import MulvesClient
 
 
 class KnowledgeEntryViewSet(viewsets.ModelViewSet):
-    """知识条目管理视图集"""
+    """Knowledge entry management viewset"""
     queryset = KnowledgeEntry.objects.filter(is_published=True)
     serializer_class = KnowledgeEntrySerializer
     permission_classes = [IsAuthenticated]
@@ -34,23 +35,23 @@ class KnowledgeEntryViewSet(viewsets.ModelViewSet):
 
 
 class KnowledgeQueryViewSet(viewsets.ViewSet):
-    """知识查询视图集"""
+    """Knowledge query viewset"""
     permission_classes = [IsAuthenticated]
 
     @action(detail=False, methods=['post'])
     def search(self, request):
-        """搜索知识库"""
+        """Search knowledge base"""
         query_text = request.data.get('query', '')
         if not query_text:
             return Response({'error': 'Query text is required'}, 
                           status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            # 使用 Mulves 客户端进行搜索
+            # Use Mulves client for searching
             mulves_client = MulvesClient()
             results = mulves_client.search(query_text)
             
-            # 记录查询日志
+            # Record query log
             KnowledgeQueryLog.objects.create(
                 query_text=query_text,
                 results_count=len(results),
@@ -69,7 +70,7 @@ class KnowledgeQueryViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     def categories(self, request):
-        """获取所有分类"""
+        """Get all categories"""
         categories = KnowledgeEntry.CATEGORY_CHOICES
         return Response([
             {'value': choice[0], 'label': choice[1]} 

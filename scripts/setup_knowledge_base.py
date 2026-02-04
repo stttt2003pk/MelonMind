@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 """
-初始化知识库脚本
-用于创建初始的知识库条目和配置
+Initialize knowledge base script
+Used to create initial knowledge base entries and configuration
 """
 
 import os
 import django
 from django.conf import settings
 
-# 设置 Django 环境
+# Set up Django environment
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
@@ -17,9 +17,9 @@ from django.contrib.auth.models import User
 
 
 def create_initial_knowledge_entries():
-    """创建初始知识库条目"""
+    """Create initial knowledge base entries"""
     
-    # 创建管理员用户（如果不存在）
+    # Create admin user (if not exists)
     admin_user, created = User.objects.get_or_create(
         username='admin',
         defaults={
@@ -32,116 +32,116 @@ def create_initial_knowledge_entries():
     if created:
         admin_user.set_password('admin123')
         admin_user.save()
-        print("创建管理员用户: admin/admin123")
+        print("Created admin user: admin/admin123")
     
-    # 初始知识条目数据
+    # Initial knowledge entry data
     initial_entries = [
         {
-            'title': 'Cisco 路由器基本配置指南',
+            'title': 'Cisco Router Basic Configuration Guide',
             'category': 'configuration',
             'content': '''
-# Cisco 路由器基本配置指南
+# Cisco Router Basic Configuration Guide
 
-## 基本设置步骤
+## Basic Setup Steps
 
-1. **进入全局配置模式**
+1. **Enter Global Configuration Mode**
 ```
 Router> enable
 Router# configure terminal
 ```
 
-2. **设置主机名**
+2. **Set Hostname**
 ```
 Router(config)# hostname MyRouter
 ```
 
-3. **配置管理IP**
+3. **Configure Management IP**
 ```
 MyRouter(config)# interface GigabitEthernet0/0
 MyRouter(config-if)# ip address 192.168.1.1 255.255.255.0
 MyRouter(config-if)# no shutdown
 ```
 
-4. **保存配置**
+4. **Save Configuration**
 ```
 MyRouter# copy running-config startup-config
 ```
             ''',
             'tags': 'cisco,router,configuration,network',
-            'source': 'Cisco 官方文档',
+            'source': 'Cisco Official Documentation',
             'created_by': admin_user,
             'is_published': True
         },
         {
-            'title': '网络故障排除标准流程',
+            'title': 'Standard Network Troubleshooting Process',
             'category': 'troubleshooting',
             'content': '''
-# 网络故障排除标准流程
+# Standard Network Troubleshooting Process
 
-## 1. 问题识别阶段
-- 收集用户反馈
-- 确认故障现象
-- 记录故障时间
+## 1. Problem Identification Phase
+- Collect user feedback
+- Confirm fault symptoms
+- Record fault time
 
-## 2. 信息收集阶段
-- 检查网络连通性
-- 查看设备状态
-- 分析日志信息
+## 2. Information Gathering Phase
+- Check network connectivity
+- View device status
+- Analyze log information
 
-## 3. 假设验证阶段
-- 制定可能原因假设
-- 逐一验证假设
-- 缩小问题范围
+## 3. Hypothesis Verification Phase
+- Develop possible cause hypotheses
+- Verify hypotheses one by one
+- Narrow down problem scope
 
-## 4. 解决方案实施
-- 制定解决方案
-- 执行修复操作
-- 验证修复效果
+## 4. Solution Implementation
+- Develop solution
+- Execute repair operations
+- Verify repair effectiveness
 
-## 5. 文档记录
-- 记录故障详情
-- 更新知识库
-- 总结经验教训
+## 5. Documentation
+- Record fault details
+- Update knowledge base
+- Summarize lessons learned
             ''',
             'tags': 'troubleshooting,fault,process,network',
-            'source': '内部运维手册',
+            'source': 'Internal Operations Manual',
             'created_by': admin_user,
             'is_published': True
         },
         {
-            'title': '网络安全最佳实践',
+            'title': 'Network Security Best Practices',
             'category': 'security',
             'content': '''
-# 网络安全最佳实践
+# Network Security Best Practices
 
-## 访问控制
-- 实施最小权限原则
-- 定期审查用户权限
-- 使用强密码策略
+## Access Control
+- Implement principle of least privilege
+- Regularly review user permissions
+- Use strong password policies
 
-## 设备安全
-- 及时更新固件
-- 关闭不必要的服务
-- 配置访问控制列表
+## Device Security
+- Update firmware promptly
+- Disable unnecessary services
+- Configure access control lists
 
-## 监控与审计
-- 启用日志记录
-- 定期安全扫描
-- 建立告警机制
+## Monitoring and Auditing
+- Enable log recording
+- Regular security scanning
+- Establish alert mechanisms
 
-## 备份策略
-- 定期配置备份
-- 测试恢复流程
-- 异地存储备份
+## Backup Strategy
+- Regular configuration backups
+- Test recovery procedures
+- Off-site backup storage
             ''',
             'tags': 'security,best-practices,network,cybersecurity',
-            'source': '行业标准指南',
+            'source': 'Industry Standard Guidelines',
             'created_by': admin_user,
             'is_published': True
         }
     ]
     
-    # 创建知识条目
+    # Create knowledge entries
     created_count = 0
     for entry_data in initial_entries:
         entry, created = KnowledgeEntry.objects.get_or_create(
@@ -150,29 +150,29 @@ MyRouter# copy running-config startup-config
         )
         if created:
             created_count += 1
-            print(f"创建知识条目: {entry.title}")
+            print(f"Created knowledge entry: {entry.title}")
     
-    print(f"总共创建了 {created_count} 个初始知识条目")
+    print(f"Total {created_count} initial knowledge entries created")
 
 
 def setup_database():
-    """初始化数据库"""
-    print("正在初始化数据库...")
+    """Initialize database"""
+    print("Initializing database...")
     
-    # 这里可以添加数据库初始化逻辑
-    # 例如创建必要的表、索引等
+    # Database initialization logic can be added here
+    # For example, creating necessary tables, indexes, etc.
     
-    print("数据库初始化完成")
+    print("Database initialization completed")
 
 
 if __name__ == '__main__':
-    print("开始初始化 MelonMind 知识库...")
+    print("Starting MelonMind knowledge base initialization...")
     
     try:
         setup_database()
         create_initial_knowledge_entries()
-        print("知识库初始化完成！")
+        print("Knowledge base initialization completed!")
     except Exception as e:
-        print(f"初始化过程中出现错误: {str(e)}")
+        print(f"Error occurred during initialization: {str(e)}")
         import traceback
         traceback.print_exc()

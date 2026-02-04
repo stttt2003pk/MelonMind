@@ -6,22 +6,22 @@ logger = logging.getLogger(__name__)
 
 
 class BaseAgentFlow(ABC):
-    """Agent 流程基类"""
+    """Agent flow base class"""
     
     def __init__(self):
         self.name = self.__class__.__name__
     
     @abstractmethod
     def execute(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
-        """执行流程的核心方法"""
+        """Core method to execute the flow"""
         pass
     
     def validate_input(self, input_data: Dict[str, Any]) -> bool:
-        """验证输入数据"""
+        """Validate input data"""
         return True
     
     def handle_error(self, error: Exception) -> Dict[str, Any]:
-        """处理执行过程中的错误"""
+        """Handle errors during execution"""
         logger.error(f"Flow execution error: {str(error)}")
         return {
             'status': 'failed',
@@ -30,27 +30,27 @@ class BaseAgentFlow(ABC):
 
 
 class NetworkOperationsFlow(BaseAgentFlow):
-    """网络运维操作流程"""
+    """Network operations flow"""
     
     def execute(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
-        """执行网络运维流程"""
+        """Execute network operations flow"""
         try:
-            # 验证输入
+            # Validate input
             if not self.validate_input(input_data):
                 raise ValueError("Invalid input data")
             
-            # 这里集成 LangChain/LangGraph 的具体实现
-            # 示例流程步骤：
+            # Integrate LangChain/LangGraph specific implementation here
+            # Example flow steps:
             operation_type = input_data.get('operation_type')
             target_device = input_data.get('target_device')
             
-            # 1. 设备连接检查
+            # 1. Device connection check
             connection_result = self._check_device_connection(target_device)
             
-            # 2. 执行具体操作
+            # 2. Execute specific operations
             operation_result = self._execute_operation(operation_type, target_device, input_data)
             
-            # 3. 结果验证
+            # 3. Result validation
             validation_result = self._validate_result(operation_result)
             
             return {
@@ -66,8 +66,8 @@ class NetworkOperationsFlow(BaseAgentFlow):
             return self.handle_error(e)
     
     def _check_device_connection(self, device_info: Dict[str, Any]) -> Dict[str, Any]:
-        """检查设备连接状态"""
-        # 集成具体的网络连接检查逻辑
+        """Check device connection status"""
+        # Integrate specific network connection checking logic
         return {
             'connected': True,
             'device_info': device_info
@@ -75,8 +75,8 @@ class NetworkOperationsFlow(BaseAgentFlow):
     
     def _execute_operation(self, operation_type: str, device_info: Dict[str, Any], 
                           params: Dict[str, Any]) -> Dict[str, Any]:
-        """执行具体网络操作"""
-        # 根据操作类型调用不同的处理函数
+        """Execute specific network operations"""
+        # Call different handler functions based on operation type
         if operation_type == 'configuration_backup':
             return self._backup_configuration(device_info)
         elif operation_type == 'health_check':
@@ -85,8 +85,8 @@ class NetworkOperationsFlow(BaseAgentFlow):
             raise ValueError(f"Unsupported operation type: {operation_type}")
     
     def _backup_configuration(self, device_info: Dict[str, Any]) -> Dict[str, Any]:
-        """备份设备配置"""
-        # 实际的备份逻辑实现
+        """Backup device configuration"""
+        # Actual backup logic implementation
         return {
             'success': True,
             'backup_file': f"backup_{device_info.get('ip')}.cfg",
@@ -94,8 +94,8 @@ class NetworkOperationsFlow(BaseAgentFlow):
         }
     
     def _health_check(self, device_info: Dict[str, Any]) -> Dict[str, Any]:
-        """健康检查"""
-        # 实际的健康检查逻辑实现
+        """Health check"""
+        # Actual health check logic implementation
         return {
             'cpu_usage': 45.2,
             'memory_usage': 67.8,
@@ -103,8 +103,8 @@ class NetworkOperationsFlow(BaseAgentFlow):
         }
     
     def _validate_result(self, result: Dict[str, Any]) -> Dict[str, Any]:
-        """验证执行结果"""
-        # 结果验证逻辑
+        """Validate execution results"""
+        # Result validation logic
         return {
             'valid': True,
             'validation_time': '2024-01-01T00:00:00Z'

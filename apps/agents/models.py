@@ -3,18 +3,18 @@ from django.contrib.auth.models import User
 
 
 class AgentFlow(models.Model):
-    """Agent 流程模型"""
-    name = models.CharField(max_length=200, verbose_name='流程名称')
-    description = models.TextField(verbose_name='描述', blank=True)
-    flow_config = models.JSONField(verbose_name='流程配置')
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='创建者')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
-    is_active = models.BooleanField(default=True, verbose_name='是否激活')
+    """Agent flow model"""
+    name = models.CharField(max_length=200, verbose_name='Flow Name')
+    description = models.TextField(verbose_name='Description', blank=True)
+    flow_config = models.JSONField(verbose_name='Flow Configuration')
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Created By')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Created At')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Updated At')
+    is_active = models.BooleanField(default=True, verbose_name='Is Active')
 
     class Meta:
-        verbose_name = 'Agent 流程'
-        verbose_name_plural = 'Agent 流程'
+        verbose_name = 'Agent Flow'
+        verbose_name_plural = 'Agent Flows'
         ordering = ['-created_at']
 
     def __str__(self):
@@ -22,27 +22,27 @@ class AgentFlow(models.Model):
 
 
 class AgentExecution(models.Model):
-    """Agent 执行记录"""
+    """Agent execution record"""
     STATUS_CHOICES = [
-        ('pending', '待执行'),
-        ('running', '执行中'),
-        ('completed', '已完成'),
-        ('failed', '失败'),
-        ('cancelled', '已取消'),
+        ('pending', 'Pending'),
+        ('running', 'Running'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+        ('cancelled', 'Cancelled'),
     ]
 
-    flow = models.ForeignKey(AgentFlow, on_delete=models.CASCADE, verbose_name='关联流程')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='状态')
-    input_data = models.JSONField(verbose_name='输入数据')
-    output_data = models.JSONField(null=True, blank=True, verbose_name='输出数据')
-    error_message = models.TextField(blank=True, verbose_name='错误信息')
-    started_at = models.DateTimeField(null=True, blank=True, verbose_name='开始时间')
-    completed_at = models.DateTimeField(null=True, blank=True, verbose_name='完成时间')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    flow = models.ForeignKey(AgentFlow, on_delete=models.CASCADE, verbose_name='Associated Flow')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='Status')
+    input_data = models.JSONField(verbose_name='Input Data')
+    output_data = models.JSONField(null=True, blank=True, verbose_name='Output Data')
+    error_message = models.TextField(blank=True, verbose_name='Error Message')
+    started_at = models.DateTimeField(null=True, blank=True, verbose_name='Start Time')
+    completed_at = models.DateTimeField(null=True, blank=True, verbose_name='Completion Time')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Created At')
 
     class Meta:
-        verbose_name = 'Agent 执行记录'
-        verbose_name_plural = 'Agent 执行记录'
+        verbose_name = 'Agent Execution Record'
+        verbose_name_plural = 'Agent Execution Records'
         ordering = ['-created_at']
 
     def __str__(self):

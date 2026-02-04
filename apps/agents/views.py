@@ -9,7 +9,7 @@ from .flows.network_ops import NetworkOperationsFlow
 
 
 class AgentFlowViewSet(viewsets.ModelViewSet):
-    """Agent 流程管理视图集"""
+    """Agent flow management viewset"""
     queryset = AgentFlow.objects.all()
     serializer_class = AgentFlowSerializer
     permission_classes = [IsAuthenticated]
@@ -19,11 +19,11 @@ class AgentFlowViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def execute(self, request, pk=None):
-        """执行指定的 Agent 流程"""
+        """Execute specified Agent flow"""
         flow = self.get_object()
         input_data = request.data.get('input_data', {})
         
-        # 创建执行记录
+        # Create execution record
         execution = AgentExecution.objects.create(
             flow=flow,
             input_data=input_data,
@@ -31,14 +31,14 @@ class AgentFlowViewSet(viewsets.ModelViewSet):
         )
         
         try:
-            # 根据流程类型选择对应的执行器
+            # Select corresponding executor based on flow type
             if 'network' in flow.name.lower():
                 flow_executor = NetworkOperationsFlow()
             else:
-                # 默认执行器
+                # Default executor
                 flow_executor = NetworkOperationsFlow()
             
-            # 异步执行流程
+            # Execute flow asynchronously
             from celery import current_app
             current_app.send_task(
                 'apps.agents.tasks.execute_agent_flow',
@@ -46,7 +46,7 @@ class AgentFlowViewSet(viewsets.ModelViewSet):
             )
             
             return Response({
-                'message': '流程已启动执行',
+                'message': 'Flow execution started',
                 'execution_id': execution.id
             }, status=status.HTTP_202_ACCEPTED)
             
@@ -60,7 +60,7 @@ class AgentFlowViewSet(viewsets.ModelViewSet):
 
 
 class AgentExecutionViewSet(viewsets.ReadOnlyModelViewSet):
-    """Agent 执行记录视图集"""
+    """Agent execution record viewset"""
     queryset = AgentExecution.objects.all()
     serializer_class = AgentExecutionSerializer
     permission_classes = [IsAuthenticated]

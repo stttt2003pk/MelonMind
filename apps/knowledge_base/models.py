@@ -3,28 +3,28 @@ from django.contrib.auth.models import User
 
 
 class KnowledgeEntry(models.Model):
-    """知识条目模型"""
+    """Knowledge entry model"""
     CATEGORY_CHOICES = [
-        ('network_device', '网络设备'),
-        ('troubleshooting', '故障排除'),
-        ('best_practices', '最佳实践'),
-        ('configuration', '配置指南'),
-        ('security', '安全'),
+        ('network_device', 'Network Device'),
+        ('troubleshooting', 'Troubleshooting'),
+        ('best_practices', 'Best Practices'),
+        ('configuration', 'Configuration Guide'),
+        ('security', 'Security'),
     ]
 
-    title = models.CharField(max_length=300, verbose_name='标题')
-    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, verbose_name='分类')
-    content = models.TextField(verbose_name='内容')
-    tags = models.CharField(max_length=500, blank=True, verbose_name='标签')
-    source = models.CharField(max_length=200, blank=True, verbose_name='来源')
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='创建者')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
-    is_published = models.BooleanField(default=True, verbose_name='是否发布')
+    title = models.CharField(max_length=300, verbose_name='Title')
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, verbose_name='Category')
+    content = models.TextField(verbose_name='Content')
+    tags = models.CharField(max_length=500, blank=True, verbose_name='Tags')
+    source = models.CharField(max_length=200, blank=True, verbose_name='Source')
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Created By')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Created At')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Updated At')
+    is_published = models.BooleanField(default=True, verbose_name='Is Published')
 
     class Meta:
-        verbose_name = '知识条目'
-        verbose_name_plural = '知识条目'
+        verbose_name = 'Knowledge Entry'
+        verbose_name_plural = 'Knowledge Entries'
         ordering = ['-created_at']
 
     def __str__(self):
@@ -32,15 +32,15 @@ class KnowledgeEntry(models.Model):
 
 
 class KnowledgeQueryLog(models.Model):
-    """知识查询日志"""
-    query_text = models.TextField(verbose_name='查询文本')
-    results_count = models.IntegerField(verbose_name='结果数量')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='查询用户')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='查询时间')
+    """Knowledge query log"""
+    query_text = models.TextField(verbose_name='Query Text')
+    results_count = models.IntegerField(verbose_name='Results Count')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Query User')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Query Time')
 
     class Meta:
-        verbose_name = '查询日志'
-        verbose_name_plural = '查询日志'
+        verbose_name = 'Query Log'
+        verbose_name_plural = 'Query Logs'
         ordering = ['-created_at']
 
     def __str__(self):
