@@ -2,17 +2,18 @@
 name = "melonmind"
 version = "0.1.0"
 description = "Django backend with LangChain/LangGraph agents and Mulves knowledge base for network engineering operations"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["stttt2003pk@gmail.com"]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.12"
 django = "^5.1"
 djangorestframework = "^3.15.0"
-langchain = "^0.3.0"
-langchain-core = "^0.3.0"
+langchain = "^1.2.8"
+langchain-core = "^1.2.8"
 langchain-community = "^0.3.0"
-langgraph = "^0.2.0"
+langgraph = "^1.0.7"
 # mulves 依赖需要根据实际包名调整
 # mulves = "^1.0.0"
 psycopg2-binary = "^2.9.7"
