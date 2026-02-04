@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .models import AgentFlow, AgentExecution
 from .serializers import AgentFlowSerializer, AgentExecutionSerializer
-from .flows.network_ops import NetworkOperationsFlow
+from .flows import NetworkOperationsFlow
 
 
 class AgentFlowViewSet(viewsets.ModelViewSet):
