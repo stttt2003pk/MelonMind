@@ -20,10 +20,17 @@ tests/
 ├── test_knowledge_base/          # 知识库应用测试
 │   ├── __init__.py
 │   └── test_mulves.py
-└── test_mulvesdb/               # MulvesDB应用测试
+├── test_mulvesdb/               # MulvesDB应用测试
+│   ├── __init__.py
+│   ├── test_api.py
+│   └── test_models.py
+└── test_pdf_loader/             # PDF Loader应用测试
     ├── __init__.py
-    ├── test_api.py
-    └── test_models.py
+    ├── test_core_functionality.py   # 核心功能测试
+    ├── test_integration.py          # 集成测试
+    ├── test_performance.py          # 性能测试
+    ├── verify_pdfloader.py          # 基本功能验证脚本
+    └── README.md                    # 测试说明文档
 ```
 
 ## 测试文件说明
@@ -39,6 +46,12 @@ tests/
 - **test_homepage.py**: 使用Django测试客户端测试主页功能
 - **test_homepage_access.py**: 使用HTTP请求测试主页的实际访问情况
 
+### PDF Loader测试 (test_pdf_loader/)
+- **test_core_functionality.py**: 测试PDF处理、embedding和基础功能
+- **test_integration.py**: 测试完整的处理流程和API集成
+- **test_performance.py**: 测试大文件处理和并发性能
+- **verify_pdfloader.py**: 快速验证PDF Loader基本功能是否正常工作
+
 ## 运行测试
 
 ```bash
@@ -51,6 +64,10 @@ python -m pytest tests/test_homepage/
 
 # 运行特定应用的测试
 python -m pytest tests/test_agents/
+python -m pytest tests/test_pdf_loader/
+
+# 运行PDF Loader验证脚本
+USE_SQLITE=true DJANGO_SETTINGS_MODULE=config.settings python tests/test_pdf_loader/verify_pdfloader.py
 ```
 
 ---

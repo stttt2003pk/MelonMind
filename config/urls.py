@@ -25,6 +25,7 @@ urlpatterns = [
     path('api/agents/', include('apps.agents.urls')),
     path('api/knowledge/', include('apps.knowledge_base.urls')),
     path('api/mulves/', include('apps.mulvesdb.urls')),
+    path('api/pdfloader/', include('apps.pdfloader.urls')),
 ]
 
 # Serve media files in development

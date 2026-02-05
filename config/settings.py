@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'apps.common',
     'apps.homepage',
     'apps.mulvesdb',
+    'apps.pdfloader',
 ]
 
 MIDDLEWARE = [
@@ -179,6 +180,11 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
+
+# Qwen API settings
+QWEN_API_KEY = os.getenv('QWEN_API_KEY', '')
+QWEN_BASE_URL = os.getenv('QWEN_BASE_URL', 'https://dashscope.aliyuncs.com/compatible-mode/v1')
+USE_MOCK_EMBEDDING = os.getenv('USE_MOCK_EMBEDDING', 'true').lower() == 'true'
 
 # Logging configuration
 LOGGING = {
