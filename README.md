@@ -120,6 +120,12 @@ MelonMind/
 - `GET /api/knowledge/entries/` - Get knowledge entries
 - `POST /api/knowledge/entries/` - Create knowledge entry
 
+### Mulves Database Operations
+- `POST /api/mulves/connections/` - Manage database connections
+- `POST /api/mulves/queries/` - Execute database queries
+- `GET /api/mulves/query-logs/` - View query execution logs
+- `GET /api/mulves/data-cache/` - Manage query cache
+
 ## Development Guide
 
 ### Code Standards

@@ -24,6 +24,7 @@ urlpatterns = [
     path('api/', include('apps.common.urls')),  # API接口保持原路径
     path('api/agents/', include('apps.agents.urls')),
     path('api/knowledge/', include('apps.knowledge_base.urls')),
+    path('api/mulves/', include('apps.mulvesdb.urls')),
 ]
 
 # Serve media files in development

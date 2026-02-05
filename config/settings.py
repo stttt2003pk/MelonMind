@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'apps.knowledge_base',
     'apps.common',
     'apps.homepage',
+    'apps.mulvesdb',
 ]
 
 MIDDLEWARE = [
