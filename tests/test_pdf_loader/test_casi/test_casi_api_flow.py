@@ -51,8 +51,7 @@ class TestCASIGuideAPIFlow(TestCase):
             port=19530,
             username="",
             password="",
-            is_active=True,
-            connection_config={"timeout": 30}
+            is_active=True
         )
         
         self.collection_name = "casi_guide_api_test"
@@ -127,7 +126,8 @@ class TestCASIGuideAPIFlow(TestCase):
         
         status_data = response_data['data']
         print(f"✓ 当前处理状态: {status_data['status']}")
-        print(f"✓ 文件大小: {status_data['file_size']} bytes")
+        if 'file_size' in status_data:
+            print(f"✓ 文件大小: {status_data['file_size']} bytes")
         if status_data.get('page_count'):
             print(f"✓ 页数: {status_data['page_count']}")
             

@@ -56,11 +56,7 @@ class TestCASIGuideIntegration(TestCase):
             port=19530,
             username="test_user",
             password="test_password",
-            is_active=True,
-            connection_config={
-                "timeout": 30,
-                "secure": False
-            }
+            is_active=True
         )
         
         # 创建测试用的集合名称
