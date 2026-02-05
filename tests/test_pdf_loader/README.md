@@ -7,6 +7,15 @@ tests/test_pdf_loader/
 ├── test_core_functionality.py    # 核心功能测试
 ├── test_integration.py          # 集成测试
 ├── test_performance.py          # 性能测试
+├── test_casi/                   # CASI参考指南专用测试
+│   ├── README.md                # CASI测试说明
+│   ├── run_casi_tests.py        # CASI测试运行器
+│   ├── test_casi_api_flow.py    # CASI API流程测试
+│   ├── test_casi_guide_integration.py  # CASI指南集成测试
+│   ├── test_casi_real_embedding.py     # CASI真实embedding测试
+│   ├── test_real_embedding_standalone.py # 独立embedding测试
+│   ├── validate_casi_environment.py    # CASI环境验证
+│   └── simple_casi_test.py      # 简单CASI测试
 └── README.md                    # 本文件
 ```
 
@@ -16,6 +25,19 @@ tests/test_pdf_loader/
 ```bash
 cd /Users/maxrocketman/myproject/MelonMind
 python -m pytest tests/test_pdf_loader/ -v
+```
+
+### 运行CASI参考指南测试
+```bash
+# 进入CASI测试目录
+cd tests/test_pdf_loader/test_casi/
+
+# 运行所有CASI测试
+python run_casi_tests.py
+
+# 或者使用pytest运行
+python -m pytest test_casi_api_flow.py -v
+python -m pytest test_casi_guide_integration.py -v
 ```
 
 ### 运行特定测试文件
@@ -40,6 +62,16 @@ python -m pytest tests/test_pdf_loader/test_core_functionality.py::PDFProcessorT
 ```
 
 ## 测试覆盖的功能
+
+### CASI参考指南测试
+专门针对CASI参考指南PDF文件的完整测试套件，位于 [test_casi/](test_casi/) 目录下，包括：
+- PDF文件上传测试
+- 文本提取和分块处理
+- 向量化和Milvus存储
+- 向量搜索功能测试
+- 使用查询条件："3 core components in CASI"
+
+详细说明请查看 [test_casi/README.md](test_casi/README.md)
 
 ### 1. 核心功能测试 (test_core_functionality.py)
 - PDF处理器功能测试
