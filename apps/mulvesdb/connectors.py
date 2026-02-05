@@ -154,26 +154,160 @@ class MulvesDBConnector:
             logger.error(f"非查询语句执行失败: {str(e)}")
             raise
             
+    async def insert_milvus_data(self, collection_name: str, data: List[Dict]) -> Dict[str, Any]:
+        """向Milvus集合插入数据
+        
+        Args:
+            collection_name (str): 集合名称
+            data (List[Dict]): 要插入的数据列表，每个字典代表一条记录
+        
+        Returns:
+            Dict[str, Any]: 插入结果信息
+        """
+        if not self._milvus_client:
+            raise ConnectionError("Milvus客户端未连接")
+            
+        start_time = datetime.now()
+        try:
+            # 检查集合是否存在
+            collections = self._milvus_client.list_collections()
+            if collection_name not in collections:
+                raise ValueError(f"集合 '{collection_name}' 不存在")
+            
+            # 插入数据
+            result = self._milvus_client.insert(
+                collection_name=collection_name,
+                data=data
+            )
+            
+            # 记录操作日志
+            execution_time = (datetime.now() - start_time).total_seconds() * 1000
+            await self._log_query(f"INSERT INTO {collection_name}", execution_time, len(data))
+            
+            return {
+                'success': True,
+                'insert_count': len(data),
+                'ids': result.primary_keys if hasattr(result, 'primary_keys') else [],
+                'execution_time_ms': execution_time
+            }
+            
+        except Exception as e:
+            execution_time = (datetime.now() - start_time).total_seconds() * 1000
+            await self._log_query(f"INSERT INTO {collection_name}", execution_time, error=str(e))
+            logger.error(f"Milvus数据插入失败: {str(e)}")
+            raise
+    
+    async def create_milvus_collection(self, collection_name: str, schema: Dict) -> bool:
+        """创建Milvus集合
+        
+        Args:
+            collection_name (str): 集合名称
+            schema (Dict): 集合schema定义
+        
+        Returns:
+            bool: 创建是否成功
+        """
+        if not self._milvus_client:
+            raise ConnectionError("Milvus客户端未连接")
+            
+        try:
+            # 检查集合是否已存在
+            collections = self._milvus_client.list_collections()
+            if collection_name in collections:
+                logger.warning(f"集合 '{collection_name}' 已存在")
+                return True
+            
+            # 创建集合
+            self._milvus_client.create_collection(
+                collection_name=collection_name,
+                schema=schema
+            )
+            
+            logger.info(f"成功创建集合: {collection_name}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"创建Milvus集合失败: {str(e)}")
+            raise
+    
+    async def drop_milvus_collection(self, collection_name: str) -> bool:
+        """删除Milvus集合
+        
+        Args:
+            collection_name (str): 集合名称
+        
+        Returns:
+            bool: 删除是否成功
+        """
+        if not self._milvus_client:
+            raise ConnectionError("Milvus客户端未连接")
+            
+        try:
+            # 检查集合是否存在
+            collections = self._milvus_client.list_collections()
+            if collection_name not in collections:
+                logger.warning(f"集合 '{collection_name}' 不存在")
+                return True
+            
+            # 删除集合
+            self._milvus_client.drop_collection(collection_name=collection_name)
+            
+            logger.info(f"成功删除集合: {collection_name}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"删除Milvus集合失败: {str(e)}")
+            raise
+    
     async def execute_milvus_vector_search(self, collection_name: str, vector_field: str, 
                                          query_vector: List[float], limit: int = 10) -> List[Dict]:
         """执行Milvus向量搜索"""
-        if not self._pool:
-            raise ConnectionError("数据库未连接")
+        if not self._milvus_client:
+            raise ConnectionError("Milvus客户端未连接")
             
-        # 构建向量搜索查询
-        search_query = MilvusQueryBuilder.build_vector_search_query(
-            collection_name, vector_field, query_vector, limit
-        )
-        
-        return await self.execute_query(search_query)
+        try:
+            # 执行向量搜索
+            search_params = {
+                "metric_type": "L2",
+                "params": {"nprobe": 10}
+            }
+            
+            result = self._milvus_client.search(
+                collection_name=collection_name,
+                data=[query_vector],
+                anns_field=vector_field,
+                search_params=search_params,
+                limit=limit,
+                output_fields=["*"]
+            )
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Milvus向量搜索失败: {str(e)}")
+            raise
         
     async def get_milvus_collections_info(self) -> List[Dict]:
         """获取Milvus集合信息"""
-        if not self._pool:
-            raise ConnectionError("数据库未连接")
+        if not self._milvus_client:
+            raise ConnectionError("Milvus客户端未连接")
             
-        info_query = MilvusQueryBuilder.build_collection_info_query()
-        return await self.execute_query(info_query)
+        try:
+            collections = self._milvus_client.list_collections()
+            info_list = []
+            
+            for collection_name in collections:
+                stats = self._milvus_client.get_collection_stats(collection_name)
+                info_list.append({
+                    'name': collection_name,
+                    'row_count': stats.get('row_count', 0) if stats else 0
+                })
+            
+            return info_list
+            
+        except Exception as e:
+            logger.error(f"获取Milvus集合信息失败: {str(e)}")
+            raise
             
     async def _log_query(self, sql: str, execution_time: float, result_count: int = None, error: str = None):
         """记录查询日志"""
@@ -321,4 +455,120 @@ class MulvesDBService:
             return {
                 'success': False,
                 'message': f'查询执行失败: {str(e)}'
+            }
+    
+    @staticmethod
+    async def insert_data_to_milvus(connection_id: int, collection_name: str, data: List[Dict]) -> Dict[str, Any]:
+        """向Milvus插入数据的服务方法
+        
+        Args:
+            connection_id (int): 连接配置ID
+            collection_name (str): 集合名称
+            data (List[Dict]): 要插入的数据
+        
+        Returns:
+            Dict[str, Any]: 插入结果
+        """
+        try:
+            # 获取连接配置
+            connection = await MulvesConnection.objects.aget(id=connection_id, is_active=True)
+            
+            # 执行插入操作
+            async with MulvesDBConnector(connection) as connector:
+                result = await connector.insert_milvus_data(collection_name, data)
+                return {
+                    'success': True,
+                    'message': f'成功插入 {result["insert_count"]} 条记录',
+                    'data': result
+                }
+                
+        except MulvesConnection.DoesNotExist:
+            return {
+                'success': False,
+                'message': '指定的连接配置不存在或未激活'
+            }
+        except Exception as e:
+            logger.error(f"插入数据失败: {str(e)}")
+            return {
+                'success': False,
+                'message': f'数据插入失败: {str(e)}'
+            }
+    
+    @staticmethod
+    async def create_milvus_collection_service(connection_id: int, collection_name: str, schema: Dict) -> Dict[str, Any]:
+        """创建Milvus集合的服务方法
+        
+        Args:
+            connection_id (int): 连接配置ID
+            collection_name (str): 集合名称
+            schema (Dict): 集合schema
+        
+        Returns:
+            Dict[str, Any]: 创建结果
+        """
+        try:
+            # 获取连接配置
+            connection = await MulvesConnection.objects.aget(id=connection_id, is_active=True)
+            
+            # 执行创建操作
+            async with MulvesDBConnector(connection) as connector:
+                await connector.create_milvus_collection(collection_name, schema)
+                return {
+                    'success': True,
+                    'message': f'成功创建集合: {collection_name}'
+                }
+                
+        except MulvesConnection.DoesNotExist:
+            return {
+                'success': False,
+                'message': '指定的连接配置不存在或未激活'
+            }
+        except Exception as e:
+            logger.error(f"创建集合失败: {str(e)}")
+            return {
+                'success': False,
+                'message': f'集合创建失败: {str(e)}'
+            }
+    
+    @staticmethod
+    async def search_vectors_in_milvus(connection_id: int, collection_name: str, 
+                                     vector_field: str, query_vector: List[float], 
+                                     limit: int = 10) -> Dict[str, Any]:
+        """在Milvus中搜索向量
+        
+        Args:
+            connection_id (int): 连接配置ID
+            collection_name (str): 集合名称
+            vector_field (str): 向量字段名
+            query_vector (List[float]): 查询向量
+            limit (int): 返回结果数量限制
+        
+        Returns:
+            Dict[str, Any]: 搜索结果
+        """
+        try:
+            # 获取连接配置
+            connection = await MulvesConnection.objects.aget(id=connection_id, is_active=True)
+            
+            # 执行搜索操作
+            async with MulvesDBConnector(connection) as connector:
+                results = await connector.execute_milvus_vector_search(
+                    collection_name, vector_field, query_vector, limit
+                )
+                return {
+                    'success': True,
+                    'message': f'搜索完成，返回 {len(results)} 条结果',
+                    'data': results
+                }
+                
+        except MulvesConnection.DoesNotExist:
+            return {
+                'success': False,
+                'message': '指定的连接配置不存在或未激活'
+            }
+        except Exception as e:
+            logger.error(f"向量搜索失败: {str(e)}")
+            return {
+                'success': False,
+                'message': f'向量搜索失败: {str(e)}'
             }
