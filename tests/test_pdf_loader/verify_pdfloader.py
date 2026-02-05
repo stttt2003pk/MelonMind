@@ -51,7 +51,9 @@ def test_basic_functionality():
     # 测试3: 测试Embedding服务
     print("\n3. 测试Embedding服务...")
     try:
-        embedding_service = get_embedding_service(use_mock=True)
+        # 根据环境变量判断是否使用mock服务
+        use_mock = os.getenv('USE_MOCK_EMBEDDING', 'true').lower() == 'true'
+        embedding_service = get_embedding_service(use_mock=use_mock)
         result = embedding_service.embed_text("测试文本")
         print("   ✓ Embedding服务工作正常")
         print(f"   - 文本: {result.text}")
@@ -74,8 +76,10 @@ def test_basic_functionality():
     print("\n5. 测试配置...")
     try:
         print("   ✓ Django配置正常")
-        print(f"   - Qwen API Key配置: {'已设置' if settings.QWEN_API_KEY else '未设置'}")
-        print(f"   - 使用Mock Embedding: {getattr(settings, 'USE_MOCK_EMBEDDING', True)}")
+        print(f"   - Qwen API Key配置: {'已设置' if os.getenv('QWEN_API_KEY') else '未设置'}")
+        print(f"   - 使用Mock Embedding: {use_mock}")
+        if not use_mock:
+            print(f"   - 正在使用真实Qwen API")
     except Exception as e:
         print(f"   ✗ 配置测试失败: {e}")
         return False
