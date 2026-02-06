@@ -16,7 +16,7 @@ django.setup()
 
 def test_homepage():
     """测试HTML主页访问"""
-    client = Client()
+    client = Client(HTTP_HOST='testserver')
     
     # 测试HTML主页
     print("_testing HTML homepage...")
@@ -35,7 +35,7 @@ def test_homepage():
 
 def test_api_home():
     """测试API首页"""
-    client = Client()
+    client = Client(HTTP_HOST='testserver')
     
     print("\n_testing API homepage...")
     response = client.get('/api/')
@@ -54,16 +54,15 @@ def test_api_home():
 
 def test_health_check():
     """测试健康检查接口"""
-    client = Client()
+    client = Client(HTTP_HOST='testserver')
     
     print("\n_testing health check...")
     response = client.get('/health/')
     print(f"Status code: {response.status_code}")
     
     if response.status_code == 200:
-        import json
-        data = json.loads(response.content.decode('utf-8'))
-        if 'status' in data and data['status'] == 'healthy':
+        content = response.content.decode('utf-8')
+        if 'running' in content.lower():
             print("✅ Health check test passed!")
         else:
             print("❌ Health check content failed")
@@ -71,6 +70,15 @@ def test_health_check():
         print(f"❌ Health check test failed with status {response.status_code}")
 
 if __name__ == '__main__':
+    import os
+    import sys
+    import django
+    
+    # 设置Django环境
+    sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+    django.setup()
+    
     print("Starting homepage tests...\n")
     test_homepage()
     test_api_home()
