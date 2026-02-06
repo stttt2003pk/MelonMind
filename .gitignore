@@ -208,3 +208,23 @@ __marimo__/
 
 # Milvus development volumes
 apps/mulvesdb/dev_utils/volumes/
+
+# Frontend (Vue.js) project
+frontend/melonmind/node_modules/
+frontend/melonmind/dist/
+frontend/melonmind/dist-ssr/
+frontend/melonmind/coverage/
+frontend/melonmind/logs/
+frontend/melonmind/npm-debug.log*
+frontend/melonmind/yarn-debug.log*
+frontend/melonmind/yarn-error.log*
+frontend/melonmind/pnpm-debug.log*
+frontend/melonmind/lerna-debug.log*
+frontend/melonmind/*.local
+frontend/melonmind/*.log
+frontend/melonmind/*.timestamp-*-*.mjs
+frontend/melonmind/test-results/
+frontend/melonmind/playwright-report/
+frontend/melonmind/__screenshots__/
+frontend/melonmind/.eslintcache
+frontend/melonmind/.DS_Store
