@@ -1,85 +1,71 @@
-<script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
+  <div id="app">
+    <div id="main-wrapper">
+      <Header />
+      <Sidebar />
+      <div class="content-body">
+        <div class="container-fluid">
+          <router-view />
+        </div>
+      </div>
+      <div class="footer">
+        <div class="copyright">
+          <p>Copyright &copy; MelonMind 2023</p>
+        </div>
+      </div>
     </div>
-  </header>
-
-  <RouterView />
+  </div>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
+<script>
+import Header from './components/Header.vue'
+import Sidebar from './components/Sidebar.vue'
+
+export default {
+  name: 'App',
+  components: {
+    Header,
+    Sidebar
+  }
+}
+</script>
+
+<style>
+/* 导入基本样式 */
+#app {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #2c3e50;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+#main-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-nav {
-  width: 100%;
-  font-size: 12px;
+.content-body {
+  flex: 1;
+  padding: 85px 0 0;
+  margin-left: 240px; /* 侧边栏宽度 */
+}
+
+.footer {
+  background: #fff;
+  padding: 15px 30px;
+  border-top: 1px solid #eee;
+  margin-left: 240px;
+}
+
+.copyright {
   text-align: center;
-  margin-top: 2rem;
 }
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
-}
-
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .content-body, .footer {
+    margin-left: 0;
   }
 }
 </style>
