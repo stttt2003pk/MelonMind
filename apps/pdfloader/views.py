@@ -106,54 +106,28 @@ class PDFUploadView(APIView):
                 status='uploaded'
             )
             
-            # 同步启动处理流程
-            from asgiref.sync import sync_to_async
-            import asyncio
-            
-            async def async_process_document():
-                pipeline = PDFProcessingPipeline(milvus_connection_id)
+            # 同步处理PDF文档
+            pipeline = PDFProcessingPipeline(milvus_connection_id)
+            try:
+                result = pipeline.process_pdf_document(pdf_document, temp_file_path)
+                logger.info(f"PDF处理完成: {result}")
+                
+                # 更新文档状态为已完成
+                pdf_document.status = 'completed'
+                pdf_document.page_count = result.get('pages_processed', 0)
+                pdf_document.save(update_fields=['status', 'page_count'])
+                
+            except Exception as e:
+                logger.error(f"PDF处理失败: {str(e)}")
+                pdf_document.mark_as_failed(str(e))
+                raise
+            finally:
+                # 清理临时文件
                 try:
-                    result = await pipeline.process_pdf_document(pdf_document, temp_file_path)
-                    logger.info(f"PDF处理完成: {result}")
-                    return result
-                except Exception as e:
-                    logger.error(f"PDF处理失败: {str(e)}")
-                    await sync_to_async(pdf_document.mark_as_failed)(str(e))
-                    raise
-                finally:
-                    # 清理临时文件
-                    try:
-                        if os.path.exists(temp_file_path):
-                            os.remove(temp_file_path)
-                    except Exception as cleanup_error:
-                        logger.warning(f"清理临时文件失败: {str(cleanup_error)}")
-            
-            # 直接运行异步函数，不需要sync_to_async包装
-            # process_async = sync_to_async(async_process_document)
-            
-            # 在后台运行处理任务
-            import threading
-            
-            def run_async_in_thread():
-                try:
-                    # 创建新的事件循环
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    loop.run_until_complete(async_process_document())
-                    loop.close()
-                except Exception as e:
-                    logger.error(f"线程中处理失败: {str(e)}")
-                    pdf_document.mark_as_failed(str(e))
-                    # 清理临时文件
-                    try:
-                        if os.path.exists(temp_file_path):
-                            os.remove(temp_file_path)
-                    except Exception as cleanup_error:
-                        logger.warning(f"清理临时文件失败: {str(cleanup_error)}")
-            
-            thread = threading.Thread(target=run_async_in_thread)
-            thread.daemon = True
-            thread.start()
+                    if os.path.exists(temp_file_path):
+                        os.remove(temp_file_path)
+                except Exception as cleanup_error:
+                    logger.warning(f"清理临时文件失败: {str(cleanup_error)}")
             
             # 返回初始响应
             response_serializer = PDFDocumentSerializer(pdf_document)
@@ -272,9 +246,9 @@ class PDFCollectionInfoView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             from .storage import PDFVectorStorageService
-            import asyncio
             storage_service = PDFVectorStorageService(active_connection.id)
-            collection_info = asyncio.run(storage_service.get_collection_info(collection_name))
+            with storage_service as service:
+                collection_info = service.get_collection_info(collection_name)
             
             return Response({
                 'success': True,

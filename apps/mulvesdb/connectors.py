@@ -400,6 +400,28 @@ class MulvesDBConnector:
         except Exception as e:
             logger.error(f"获取Milvus集合信息失败: {str(e)}")
             raise
+    
+    def get_milvus_collections_info_sync(self) -> List[Dict]:
+        """获取Milvus集合信息（同步版本）"""
+        if not self._milvus_client:
+            raise ConnectionError("Milvus客户端未连接")
+            
+        try:
+            collections = self._milvus_client.list_collections()
+            info_list = []
+            
+            for collection_name in collections:
+                stats = self._milvus_client.get_collection_stats(collection_name)
+                info_list.append({
+                    'name': collection_name,
+                    'row_count': stats.get('row_count', 0) if stats else 0
+                })
+            
+            return info_list
+            
+        except Exception as e:
+            logger.error(f"获取Milvus集合信息失败: {str(e)}")
+            raise
             
     async def _log_query(self, sql: str, execution_time: float, result_count: int = None, error: str = None):
         """记录查询日志（异步版本）"""
