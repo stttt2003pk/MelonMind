@@ -21,9 +21,8 @@ tests/
 │   ├── __init__.py
 │   └── test_mulves.py
 ├── test_mulvesdb/               # MulvesDB应用测试
-│   ├── __init__.py
-│   ├── test_api.py
-│   └── test_models.py
+│   ├── test_milvus_final.py     # Milvus核心功能测试
+│   └── README.md                # 测试说明文档
 └── test_pdf_loader/             # PDF Loader应用测试
     ├── __init__.py
     ├── test_core_functionality.py   # 核心功能测试
