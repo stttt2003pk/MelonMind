@@ -80,4 +80,13 @@ class MulvesDataCache(models.Model):
     @property
     def is_expired(self):
         """检查缓存是否已过期"""
+        if self.expires_at is None:
+            return True
         return timezone.now() > self.expires_at
+        
+    def clean_expired_cache(self):
+        """清理过期的缓存记录（同步方法）"""
+        expired_caches = MulvesDataCache.objects.filter(expires_at__lt=timezone.now())
+        count = expired_caches.count()
+        expired_caches.delete()
+        return count

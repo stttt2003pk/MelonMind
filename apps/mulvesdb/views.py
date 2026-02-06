@@ -5,7 +5,6 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-import asyncio
 
 from .models import MulvesConnection, MulvesQueryLog, MulvesDataCache
 from .serializers import (
@@ -40,12 +39,7 @@ class MulvesConnectionViewSet(viewsets.ModelViewSet):
         serializer = MulvesTestConnectionSerializer(data=request.data)
         if serializer.is_valid():
             try:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                result = loop.run_until_complete(
-                    MulvesDBService.test_connection(serializer.validated_data)
-                )
-                loop.close()
+                result = MulvesDBService.test_connection(serializer.validated_data)
                 
                 if result['success']:
                     return Response(result, status=status.HTTP_200_OK)
@@ -74,13 +68,8 @@ def health_check(request):
         # 获取本地配置
         local_config = MilvusLocalConfig.get_local_config()
         
-        # 异步测试连接
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        result = loop.run_until_complete(
-            MulvesDBService.test_connection(local_config)
-        )
-        loop.close()
+        # 同步测试连接
+        result = MulvesDBService.test_connection(local_config)
         
         response_data = {
             'status': 'healthy' if result['success'] else 'unhealthy',
@@ -140,13 +129,8 @@ def health_check(request):
             # 获取本地配置
             local_config = MilvusLocalConfig.get_local_config()
             
-            # 异步测试连接
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(
-                MulvesDBService.test_connection(local_config)
-            )
-            loop.close()
+            # 同步测试连接
+            result = MulvesDBService.test_connection(local_config)
             
             response_data = {
                 'success': result['success'],
@@ -228,12 +212,7 @@ class MulvesDataCacheViewSet(viewsets.ModelViewSet):
         cache_key = request.query_params.get('cache_key')
         
         try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            deleted_count = loop.run_until_complete(
-                MulvesDBService.clear_cache(cache_key)
-            )
-            loop.close()
+            deleted_count = MulvesDBService.clear_cache(cache_key)
             
             return Response({
                 'success': True,
@@ -260,17 +239,12 @@ class MulvesQueryViewSet(viewsets.ViewSet):
         serializer = MulvesQueryRequestSerializer(data=request.data)
         if serializer.is_valid():
             try:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                result = loop.run_until_complete(
-                    MulvesDBService.execute_cached_query(
-                        connection_id=serializer.validated_data['connection_id'],
-                        sql=serializer.validated_data['query_sql'],
-                        use_cache=serializer.validated_data['use_cache'],
-                        cache_timeout=serializer.validated_data['cache_timeout']
-                    )
+                result = MulvesDBService.execute_cached_query(
+                    connection_id=serializer.validated_data['connection_id'],
+                    sql=serializer.validated_data['query_sql'],
+                    use_cache=serializer.validated_data['use_cache'],
+                    cache_timeout=serializer.validated_data['cache_timeout']
                 )
-                loop.close()
                 
                 if result['success']:
                     return Response(result, status=status.HTTP_200_OK)
