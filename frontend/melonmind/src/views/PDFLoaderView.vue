@@ -25,8 +25,10 @@
               </div>
               
               <div class="upload-actions">
-                <button class="btn btn-primary" @click="processFiles">Process Files</button>
-                <button class="btn btn-secondary" @click="clearFiles">Clear All</button>
+                <button class="btn btn-primary" @click="processFiles" :disabled="fileList.length === 0 || processing">
+                  {{ processing ? 'Processing...' : 'Process Files' }}
+                </button>
+                <button class="btn btn-secondary" @click="clearFiles" :disabled="processing">Clear All</button>
               </div>
             </div>
           </div>
@@ -58,6 +60,7 @@
                     class="remove-btn" 
                     @click="removeFile(index)"
                     v-if="file.status !== 'processing' && file.status !== 'completed'"
+                    :disabled="processing"
                   >
                     <i class="fa fa-times"></i>
                   </button>
@@ -110,6 +113,8 @@
 </template>
 
 <script>
+import apiClient from '@/services/api.js';
+
 export default {
   name: 'PDFLoaderView',
   data() {
@@ -132,7 +137,9 @@ export default {
       this.addFiles(files);
     },
     triggerFileSelect() {
-      this.$refs.fileInput.click();
+      if (!this.processing) {
+        this.$refs.fileInput.click();
+      }
     },
     handleFileSelect(e) {
       const files = Array.from(e.target.files);
@@ -152,10 +159,7 @@ export default {
         }
       });
     },
-    removeFile(index) {
-      this.fileList.splice(index, 1);
-    },
-    processFiles() {
+    async processFiles() {
       if (this.fileList.length === 0) {
         alert('Please select at least one PDF file to process.');
         return;
@@ -166,51 +170,62 @@ export default {
       this.processedCount = 0;
       this.failedCount = 0;
 
-      // 模拟处理过程
-      this.simulateProcessing();
-    },
-    simulateProcessing() {
-      // 更新每个文件的状态为正在处理
-      this.fileList.forEach(file => {
-        if (file.status === 'pending') {
-          file.status = 'processing';
-        }
-      });
-
-      let processed = 0;
-      const total = this.fileList.length;
+      // 处理每个文件
+      for (let i = 0; i < this.fileList.length; i++) {
+        this.fileList[i].status = 'processing';
+        await this.uploadFile(this.fileList[i]);
+        
+        // 更新进度
+        this.progressPercentage = ((i + 1) / this.fileList.length) * 100;
+        this.progressMessage = `Processing... ${i + 1}/${this.fileList.length}`;
+      }
       
-      const interval = setInterval(() => {
-        if (processed < total) {
-          // 随机成功或失败
-          const isSuccess = Math.random() > 0.1; // 90% 成功率
-          
-          if (isSuccess) {
-            this.fileList[processed].status = 'completed';
-            this.processedCount++;
-          } else {
-            this.fileList[processed].status = 'failed';
-            this.failedCount++;
+      this.progressMessage = 'Processing completed!';
+      this.processing = false;
+      
+      setTimeout(() => {
+        this.progressMessage = 'Ready to process';
+      }, 3000);
+    },
+    async uploadFile(fileObj) {
+      const formData = new FormData();
+      formData.append('file', fileObj.file);
+      formData.append('title', fileObj.name);
+      // 默认使用第一个Milvus连接和动态生成的集合名称
+      formData.append('milvus_connection_id', 1); 
+      formData.append('collection_name', 'pdf_docs_' + Date.now());
+
+      try {
+        const response = await apiClient.post('/pdfloader/upload/', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
           }
-          
-          processed++;
-          this.progressPercentage = (processed / total) * 100;
-          this.progressMessage = `Processing... ${processed}/${total}`;
+        });
+        
+        if (response.data.success) {
+          fileObj.status = 'completed';
+          this.processedCount++;
         } else {
-          clearInterval(interval);
-          this.progressMessage = 'Processing completed!';
-          this.processing = false;
-          
-          setTimeout(() => {
-            this.progressMessage = 'Ready to process';
-          }, 3000);
+          fileObj.status = 'failed';
+          this.failedCount++;
         }
-      }, 800);
+      } catch (error) {
+        console.error('Upload error:', error);
+        fileObj.status = 'failed';
+        this.failedCount++;
+      }
+    },
+    removeFile(index) {
+      if (!this.processing) {
+        this.fileList.splice(index, 1);
+      }
     },
     clearFiles() {
-      this.fileList = [];
-      this.processedCount = 0;
-      this.failedCount = 0;
+      if (!this.processing) {
+        this.fileList = [];
+        this.processedCount = 0;
+        this.failedCount = 0;
+      }
     },
     formatFileSize(bytes) {
       if (bytes === 0) return '0 Bytes';
@@ -280,6 +295,11 @@ export default {
   margin-right: 10px;
   cursor: pointer;
   border: none;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-primary {
@@ -359,6 +379,11 @@ export default {
   font-size: 16px;
 }
 
+.remove-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .empty-state {
   text-align: center;
   padding: 40px 0;
@@ -423,4 +448,3 @@ export default {
     max-width: 100%;
   }
 }
-</style>
