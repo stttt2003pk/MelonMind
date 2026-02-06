@@ -6,46 +6,73 @@
           <div class="card-body">
             <h3 class="card-title text-white">Documents Loaded</h3>
             <div class="d-inline-block">
-              <h2 class="text-white">4565</h2>
+              <h2 class="text-white">{{ stats.processed_documents }}</h2>
               <p class="text-white mb-0">Total PDFs Processed</p>
             </div>
-            <span class="float-right display-5 opacity-5"><i class="fa fa-file-pdf"></i></span>
+            <!-- <div class="float-right display-5 opacity-5">
+              <i class="fa fa-file-pdf"></i>
+            </div> -->
+
           </div>
         </div>
       </div>
       <div class="col-lg-3 col-sm-6">
         <div class="card gradient-2">
           <div class="card-body">
-            <h3 class="card-title text-white">Vector Storage</h3>
+            <h3 class="card-title text-white">Total Documents</h3>
             <div class="d-inline-block">
-              <h2 class="text-white">8541</h2>
-              <p class="text-white mb-0">Items in DB</p>
+              <h2 class="text-white">{{ stats.total_documents }}</h2>
+              <p class="text-white mb-0">In Knowledge Base</p>
             </div>
-            <span class="float-right display-5 opacity-5"><i class="fa fa-database"></i></span>
+            <!-- <div class="float-right display-5 opacity-5">
+              <i class="fa fa-files-o"></i>
+            </div> -->
+
           </div>
         </div>
       </div>
       <div class="col-lg-3 col-sm-6">
         <div class="card gradient-3">
           <div class="card-body">
-            <h3 class="card-title text-white">Active Agents</h3>
+            <h3 class="card-title text-white">Processing</h3>
             <div class="d-inline-block">
-              <h2 class="text-white">4565</h2>
-              <p class="text-white mb-0">Running Processes</p>
+              <h2 class="text-white">{{ stats.processing_documents }}</h2>
+              <p class="text-white mb-0">Documents Processing</p>
             </div>
-            <span class="float-right display-5 opacity-5"><i class="fa fa-cogs"></i></span>
+            <!-- <div class="float-right display-5 opacity-5">
+              <i class="fa fa-spinner"></i>
+            </div> -->
+
           </div>
         </div>
       </div>
       <div class="col-lg-3 col-sm-6">
         <div class="card gradient-4">
           <div class="card-body">
-            <h3 class="card-title text-white">System Health</h3>
+            <h3 class="card-title text-white">Failed Documents</h3>
             <div class="d-inline-block">
-              <h2 class="text-white">99%</h2>
-              <p class="text-white mb-0">Uptime</p>
+              <h2 class="text-white">{{ stats.failed_documents }}</h2>
+              <p class="text-white mb-0">Processing Failures</p>
             </div>
-            <span class="float-right display-5 opacity-5"><i class="fa fa-heart"></i></span>
+            <!-- <div class="float-right display-5 opacity-5">
+              <i class="fa fa-exclamation-triangle"></i>
+            </div> -->
+
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-sm-6">
+        <div class="card gradient-5">
+          <div class="card-body">
+            <h3 class="card-title text-white">Uploaded</h3>
+            <div class="d-inline-block">
+              <h2 class="text-white">{{ stats.uploaded_documents }}</h2>
+              <p class="text-white mb-0">Documents Uploaded</p>
+            </div>
+            <!-- <div class="float-right display-5 opacity-5">
+              <i class="fa fa-upload"></i>
+            </div> -->
+
           </div>
         </div>
       </div>
@@ -192,6 +219,10 @@ export default {
   background: linear-gradient(45deg,#57d66c,#56f8ac);
 }
 
+.gradient-5 {
+  background: linear-gradient(45deg,#ff9a9e,#fad0c4);
+}
+
 .card {
   border: none;
   border-radius: 4px;
@@ -227,9 +258,10 @@ export default {
 }
 
 .fa-file-pdf::before { content: "\f1c1"; }
-.fa-database::before { content: "\f1c0"; }
-.fa-cogs::before { content: "\f085"; }
-.fa-heart::before { content: "\f004"; }
+.fa-files-o::before { content: "\f0c5"; }
+.fa-spinner::before { content: "\f110"; }
+.fa-exclamation-triangle::before { content: "\f071"; }
+.fa-upload::before { content: "\f093"; }
 
 .row {
   display: flex;
@@ -244,9 +276,9 @@ export default {
   flex: 0 0 auto;
 }
 
-.col-lg-3 { flex: 0 0 25%; max-width: 25%; }
+.col-lg-3 { flex: 0 0 20%; max-width: 20%; min-width: 100px; }
 .col-lg-6 { flex: 0 0 50%; max-width: 50%; }
-.col-sm-6 { flex: 0 0 50%; max-width: 50%; }
+.col-sm-6 { flex: 0 0 20%; max-width: 20%; min-width: 100px; }
 .col-md-12 { flex: 0 0 100%; max-width: 100%; }
 
 @media (max-width: 991px) {
