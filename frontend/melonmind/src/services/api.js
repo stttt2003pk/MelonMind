@@ -60,4 +60,13 @@ apiClient.setBaseURL = (newBaseURL) => {
   apiClient.defaults.baseURL = newBaseURL;
 };
 
+// 知识库相关API
+const knowledgeBaseAPI = {
+  // 获取文档统计信息
+  getDocumentStats: () => {
+    return apiClient.get('/knowledge/document-stats/');
+  }
+};
+
 export default apiClient;
+export { knowledgeBaseAPI };

@@ -10,6 +10,7 @@
 - [MULVESDB_API_TEST.md](./MULVESDB_API_TEST.md) - MulvesDB API 测试文档
 - [MULVESDB_GUIDE.md](./MULVESDB_GUIDE.md) - MulvesDB 使用指南
 - [PDFLOADER_GUIDE.md](./PDFLOADER_GUIDE.md) - PDF Loader 使用指南
+- [KNOWLEDGE_BASE_TESTS.md](./KNOWLEDGE_BASE_TESTS.md) - 知识库测试说明
 
 ## 项目主文档
 

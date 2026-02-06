@@ -19,6 +19,9 @@ tests/
 │   └── test_homepage_access.py  # HTTP请求主页访问测试
 ├── test_knowledge_base/          # 知识库应用测试
 │   ├── __init__.py
+│   ├── README.md                 # 知识库测试说明
+│   ├── test_document_stats.py    # 文档统计API测试
+│   ├── test_frontend_integration.py # 前端集成测试
 │   └── test_mulves.py
 ├── test_mulvesdb/               # MulvesDB应用测试
 │   ├── test_milvus_final.py     # Milvus核心功能测试

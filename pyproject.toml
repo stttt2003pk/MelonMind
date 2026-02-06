@@ -33,6 +33,7 @@ langchain-text-splitters = "^1.1.0"
 sqlalchemy = "^2.0.0"  # 数据库工具包
 timeout-decorator = "^0.5.0"  # 超时控制装饰器
 retry = "^0.9.2"  # 重试机制
+ipdb = "^0.13.13"
 
 
 [tool.poetry.group.dev.dependencies]

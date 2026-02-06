@@ -21,7 +21,7 @@
                   accept=".pdf" 
                   multiple 
                   style="display: none"
-                >
+                />
               </div>
               
               <div class="upload-actions">
@@ -448,3 +448,4 @@ export default {
     max-width: 100%;
   }
 }
+</style>

@@ -4,7 +4,10 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from .models import KnowledgeEntry, KnowledgeQueryLog
+from ..pdfloader.models import PDFDocument
 from .serializers import KnowledgeEntrySerializer, KnowledgeQueryLogSerializer
 from .connectors.mulves_client import MulvesClient
 
@@ -76,3 +79,21 @@ class KnowledgeQueryViewSet(viewsets.ViewSet):
             {'value': choice[0], 'label': choice[1]} 
             for choice in categories
         ])
+
+@api_view(['GET'])
+@permission_classes([AllowAny])  # Health check endpoints should be publicly accessible
+def get_document_stats(request):
+    """Get statistics about loaded documents"""
+    total_docs = PDFDocument.objects.count()
+    processed_docs = PDFDocument.objects.filter(status='completed').count()
+    processing_docs = PDFDocument.objects.filter(status='processing').count()
+    failed_docs = PDFDocument.objects.filter(status='failed').count()
+    uploaded_docs = PDFDocument.objects.filter(status='uploaded').count()
+    
+    return Response({
+        'total_documents': total_docs,
+        'processed_documents': processed_docs,
+        'processing_documents': processing_docs,
+        'failed_documents': failed_docs,
+        'uploaded_documents': uploaded_docs,
+    })

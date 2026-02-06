@@ -128,11 +128,45 @@
 </template>
 
 <script>
+import { knowledgeBaseAPI } from '@/services/api';
+
 export default {
   name: 'HomeView',
-  mounted() {
-    // 如果需要图表功能，可以在这里初始化
-    console.log('Dashboard loaded');
+  data() {
+    return {
+      stats: {
+        total_documents: 0,
+        processed_documents: 0,
+        processing_documents: 0,
+        failed_documents: 0,
+        uploaded_documents: 0,
+      },
+      loadingStats: true
+    };
+  },
+  async mounted() {
+    await this.loadDocumentStats();
+  },
+  methods: {
+    async loadDocumentStats() {
+      try {
+        this.loadingStats = true;
+        const response = await knowledgeBaseAPI.getDocumentStats();
+        this.stats = response.data;
+      } catch (error) {
+        console.error('Error fetching document stats:', error);
+        // 设置默认值以防API调用失败
+        this.stats = {
+          total_documents: 'N/A',
+          processed_documents: 'N/A',
+          processing_documents: 'N/A',
+          failed_documents: 'N/A',
+          uploaded_documents: 'N/A',
+        };
+      } finally {
+        this.loadingStats = false;
+      }
+    }
   }
 }
 </script>

@@ -169,10 +169,27 @@ REST_FRAMEWORK = {
 }
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
+if DEBUG:
+    # 开发环境：允许常见的开发服务器地址
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",  # Vite default port
+        "http://127.0.0.1:5173",
+        "http://localhost:3001",  # Alternative Vite port
+        "http://127.0.0.1:3001",
+    ]
+else:
+    # 生产环境：从环境变量中读取允许的域名
+    allowed_origins = os.getenv('CORS_ALLOWED_ORIGINS', '').strip()
+    if allowed_origins:
+        CORS_ALLOWED_ORIGINS = [origin.strip() for origin in allowed_origins.split(',')]
+    else:
+        # 默认为空列表，强制管理员明确配置CORS设置
+        CORS_ALLOWED_ORIGINS = []
+
+# 可选：在生产环境中允许所有来源（仅限调试，生产环境不推荐）
+CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL_ORIGINS', 'False').lower() == 'true'
 
 # Celery settings
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
