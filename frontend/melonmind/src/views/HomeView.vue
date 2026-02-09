@@ -155,52 +155,81 @@
 </template>
 
 <script>
+import { ref, onMounted } from 'vue'
 import { knowledgeBaseAPI } from '@/services/api';
 
 export default {
   name: 'HomeView',
-  data() {
-    return {
-      stats: {
-        total_documents: 0,
-        processed_documents: 0,
-        processing_documents: 0,
-        failed_documents: 0,
-        uploaded_documents: 0,
-      },
-      loadingStats: true
-    };
-  },
-  async mounted() {
-    await this.loadDocumentStats();
-  },
-  methods: {
-    async loadDocumentStats() {
+  setup() {
+    const stats = ref({
+      total_documents: 0,
+      processed_documents: 0,
+      processing_documents: 0,
+      failed_documents: 0,
+      uploaded_documents: 0,
+    });
+    
+    const loadingStats = ref(true);
+    
+    const loadDocumentStats = async () => {
       try {
-        this.loadingStats = true;
+        loadingStats.value = true;
         const response = await knowledgeBaseAPI.getDocumentStats();
-        this.stats = response.data;
+        stats.value = response.data || stats.value;
       } catch (error) {
         console.error('Error fetching document stats:', error);
         // 设置默认值以防API调用失败
-        this.stats = {
-          total_documents: 'N/A',
-          processed_documents: 'N/A',
-          processing_documents: 'N/A',
-          failed_documents: 'N/A',
-          uploaded_documents: 'N/A',
+        stats.value = {
+          total_documents: 0,
+          processed_documents: 0,
+          processing_documents: 0,
+          failed_documents: 0,
+          uploaded_documents: 0,
         };
       } finally {
-        this.loadingStats = false;
+        loadingStats.value = false;
       }
-    }
+    };
+    
+    onMounted(async () => {
+      await loadDocumentStats();
+    });
+    
+    return {
+      stats,
+      loadingStats,
+      loadDocumentStats
+    };
   }
-}
+};
 </script>
 
 <style scoped>
 .dashboard {
   padding: 20px 0;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+  flex-direction: column;
+}
+
+.loading-spinner {
+  text-align: center;
+}
+
+.loading-spinner i {
+  font-size: 3rem;
+  color: #3498DB;
+  margin-bottom: 1rem;
+}
+
+.loading-spinner p {
+  color: #666;
+  font-size: 1.1rem;
 }
 
 .gradient-1 {

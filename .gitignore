@@ -228,3 +228,4 @@ frontend/melonmind/playwright-report/
 frontend/melonmind/__screenshots__/
 frontend/melonmind/.eslintcache
 frontend/melonmind/.DS_Store
+node_modules/.vite/
