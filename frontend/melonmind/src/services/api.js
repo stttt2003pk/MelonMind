@@ -60,6 +60,48 @@ apiClient.setBaseURL = (newBaseURL) => {
   apiClient.defaults.baseURL = newBaseURL;
 };
 
+// PDF文档处理相关API
+const pdfLoaderAPI = {
+  // 上传PDF文件
+  uploadPDF: (formData) => {
+    return apiClient.post('/pdfloader/upload/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+  },
+  
+  // 获取PDF文档列表
+  getDocuments: (params = {}) => {
+    return apiClient.get('/pdfloader/documents/', { params });
+  },
+  
+  // 获取PDF文档详情
+  getDocumentDetail: (documentId) => {
+    return apiClient.get(`/pdfloader/documents/${documentId}/`);
+  },
+  
+  // 获取PDF文档分块信息
+  getDocumentChunks: (documentId) => {
+    return apiClient.get(`/pdfloader/documents/${documentId}/chunks/`);
+  },
+  
+  // 获取处理状态
+  getProcessingStatus: (documentId) => {
+    return apiClient.get(`/pdfloader/documents/${documentId}/status/`);
+  },
+  
+  // 向量搜索
+  vectorSearch: (searchData) => {
+    return apiClient.post('/pdfloader/search/', searchData);
+  },
+  
+  // 获取集合信息
+  getCollectionInfo: (collectionName) => {
+    return apiClient.get(`/pdfloader/collections/${collectionName}/info/`);
+  }
+};
+
 // 知识库相关API
 const knowledgeBaseAPI = {
   // 获取文档统计信息
@@ -69,4 +111,4 @@ const knowledgeBaseAPI = {
 };
 
 export default apiClient;
-export { knowledgeBaseAPI };
+export { knowledgeBaseAPI, pdfLoaderAPI };
