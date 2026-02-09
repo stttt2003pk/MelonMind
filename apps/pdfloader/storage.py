@@ -173,9 +173,14 @@ class PDFVectorStorageService:
             if not milvus_data:
                 raise Exception("所有分块的embedding都失败了")
             
-            # 3. 写入Milvus
-            logger.info(f"开始写入 {len(milvus_data)} 条记录到Milvus")
-            result = self.milvus_connector.insert_milvus_data_sync(collection_name, milvus_data)
+            # 3. 写入Milvus（启用去重）
+            logger.info(f"开始写入 {len(milvus_data)} 条记录到Milvus（启用去重）")
+            result = self.milvus_connector.insert_milvus_data_sync(
+                collection_name=collection_name,
+                data=milvus_data,
+                enable_dedup=True,
+                document_id=document_id
+            )
             
             # 4. 更新本地数据库记录
             self._update_chunk_records(document_id, successful_chunks)

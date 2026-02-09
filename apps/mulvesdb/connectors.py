@@ -716,13 +716,16 @@ class MulvesDBService:
             }
     
     @staticmethod
-    async def insert_data_to_milvus(connection_id: int, collection_name: str, data: List[Dict]) -> Dict[str, Any]:
-        """向Milvus插入数据的服务方法
+    async def insert_data_to_milvus(connection_id: int, collection_name: str, data: List[Dict], 
+                                  enable_dedup: bool = True, document_id: Optional[int] = None) -> Dict[str, Any]:
+        """向Milvus插入数据的服务方法（支持去重）
         
         Args:
             connection_id (int): 连接配置ID
             collection_name (str): 集合名称
             data (List[Dict]): 要插入的数据
+            enable_dedup (bool): 是否启用去重功能
+            document_id (Optional[int]): 文档ID
         
         Returns:
             Dict[str, Any]: 插入结果
@@ -733,10 +736,14 @@ class MulvesDBService:
             
             # 执行插入操作
             async with MulvesDBConnector(connection) as connector:
-                result = await connector.insert_milvus_data(collection_name, data)
+                result = await connector.insert_milvus_data(collection_name, data, enable_dedup, document_id)
+                message = f'成功插入 {result["insert_count"]} 条记录'
+                if result.get('filtered_count', 0) > 0:
+                    message += f'（过滤 {result["filtered_count"]} 个重复块）'
+                
                 return {
                     'success': True,
-                    'message': f'成功插入 {result["insert_count"]} 条记录',
+                    'message': message,
                     'data': result
                 }
                 

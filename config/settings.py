@@ -224,3 +224,8 @@ LOGGING = {
         'level': 'INFO',
     },
 }
+# Custom test runner to fix PostgreSQL test database creation issues
+# See docs/DJANGO_POSTGRESQL_TEST_ISSUE.md for details
+# This resolves the 'relation "auth_user" does not exist' error
+# that occurs with Django's default test runner in PostgreSQL environments
+TEST_RUNNER = 'tests.custom_test_runner.CustomTestRunner'

@@ -2,7 +2,7 @@
 
 ## 核心测试文件
 
-### `test_milvus_final.py` (唯一测试文件)
+### `test_milvus_final.py`
 - **用途**: Milvus 写入功能的最终验证测试
 - **特点**: 使用 pymilvus 2.6.8 的正确 API
 - **测试内容**: 
@@ -12,6 +12,25 @@
   - 向量搜索
   - 统计信息获取
 - **运行方式**: `python test_milvus_final.py`
+
+### `test_chunk_deduplication.py`
+- **用途**: 块级去重功能单元测试
+- **特点**: Django TestCase 测试框架
+- **测试内容**:
+  - 哈希计算功能
+  - 去重管理器
+  - 块数据过滤
+  - 数据库模型操作
+- **运行方式**: `python manage.py test tests.test_mulvesdb.test_chunk_deduplication`
+
+### `test_chunk_dedup_manual.py`
+- **用途**: 块级去重功能手动验证测试
+- **特点**: 独立Python脚本，无需Django环境
+- **测试内容**:
+  - 核心功能验证
+  - 真实场景演示
+  - 去重效益展示
+- **运行方式**: `python test_chunk_dedup_manual.py`
 
 ## 快速开始
 
@@ -32,6 +51,16 @@ python test_milvus_final.py
 # 查看使用示例
 python test_milvus_final.py examples
 ```
+
+## 相关文档
+
+### `BLOCK_DEDUPLICATION_IMPLEMENTATION_SUMMARY.md`
+- **内容**: 块级去重功能完整实施总结
+- **涵盖**: 技术架构、实现细节、集成情况、使用说明
+
+### `BLOCK_DEDUPLICATION_TODO.md`  
+- **内容**: 块级去重功能待完善事项
+- **涵盖**: 未来优化方向、功能扩展计划
 
 ## 测试验证
 运行测试后会显示详细的执行过程和结果，确保所有功能正常工作。
