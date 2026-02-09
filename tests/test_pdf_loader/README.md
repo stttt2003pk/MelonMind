@@ -30,6 +30,13 @@ python manage.py test tests.test_pdf_loader.test_casi.test_casi_working_edge -v 
 - 支持13.9MB大型PDF文件处理
 - 返回相似度排序的搜索结果
 
+### 文档去重功能测试
+- 验证SHA-256哈希计算的准确性和一致性
+- 测试相同文件产生相同哈希值
+- 测试不同文件产生不同哈希值
+- 验证数据库层面的去重检查方法
+- 确保模型方法exists_by_file_hash和get_by_file_hash正常工作
+
 ## 测试环境要求
 
 ### 环境变量

@@ -8,6 +8,7 @@ class PDFDocument(models.Model):
     title = models.CharField(max_length=500, verbose_name='文档标题')
     file_path = models.CharField(max_length=1000, verbose_name='文件路径')
     file_size = models.BigIntegerField(verbose_name='文件大小(字节)')
+    file_hash = models.CharField(max_length=64, blank=True, null=True, verbose_name='文件哈希值')
     page_count = models.IntegerField(verbose_name='页数')
     
     # 文档处理状态
@@ -44,6 +45,7 @@ class PDFDocument(models.Model):
         indexes = [
             models.Index(fields=['status', 'created_at']),
             models.Index(fields=['milvus_connection']),
+            models.Index(fields=['file_hash']),
         ]
 
     def __str__(self):
@@ -65,6 +67,19 @@ class PDFDocument(models.Model):
         self.status = 'failed'
         self.error_message = error_message
         self.save(update_fields=['status', 'error_message'])
+    
+    @classmethod
+    def get_by_file_hash(cls, file_hash):
+        """根据文件哈希值查找文档"""
+        try:
+            return cls.objects.get(file_hash=file_hash)
+        except cls.DoesNotExist:
+            return None
+    
+    @classmethod
+    def exists_by_file_hash(cls, file_hash):
+        """检查是否存在具有相同哈希值的文档"""
+        return cls.objects.filter(file_hash=file_hash).exists()
 
 
 class PDFChunk(models.Model):

@@ -8,11 +8,14 @@ class PDFDocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = PDFDocument
         fields = [
-            'id', 'title', 'file_path', 'file_size', 'page_count',
+            'id', 'title', 'file_path', 'file_size', 'file_hash', 'page_count',
             'status', 'milvus_connection', 'collection_name',
             'error_message', 'created_at', 'updated_at', 'processed_at'
         ]
         read_only_fields = ['id', 'status', 'error_message', 'created_at', 'updated_at', 'processed_at']
+        extra_kwargs = {
+            'file_hash': {'read_only': True},  # 哈希值由系统自动生成
+        }
 
 
 class PDFDocumentCreateSerializer(serializers.ModelSerializer):

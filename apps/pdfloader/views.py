@@ -13,6 +13,7 @@ from django.conf import settings
 
 from apps.common.exceptions import MelonMindException
 from .models import PDFDocument, PDFChunk
+from .utils import calculate_file_hash, get_existing_document_by_hash
 from .serializers import (
     PDFDocumentSerializer, PDFDocumentCreateSerializer, 
     PDFChunkSerializer, PDFUploadSerializer, 
@@ -95,11 +96,43 @@ class PDFUploadView(APIView):
                 for chunk in uploaded_file.chunks():
                     destination.write(chunk)
             
+            # 计算文件哈希值用于去重检查
+            try:
+                file_hash = calculate_file_hash(temp_file_path)
+                logger.debug(f"文件哈希值: {file_hash}")
+                
+                # 检查是否为重复文档
+                existing_document = get_existing_document_by_hash(file_hash)
+                if existing_document:
+                    logger.info(f"发现重复文档: {existing_document.title} (ID: {existing_document.id})")
+                    
+                    # 清理临时文件
+                    try:
+                        if os.path.exists(temp_file_path):
+                            os.remove(temp_file_path)
+                    except Exception as cleanup_error:
+                        logger.warning(f"清理临时文件失败: {str(cleanup_error)}")
+                    
+                    # 返回已存在的文档信息
+                    response_serializer = PDFDocumentSerializer(existing_document)
+                    return Response({
+                        'success': True,
+                        'message': '检测到重复文档，返回已有记录',
+                        'data': response_serializer.data,
+                        'duplicate': True,
+                        'existing_document_id': existing_document.id
+                    }, status=status.HTTP_200_OK)
+                    
+            except Exception as hash_error:
+                logger.warning(f"计算文件哈希失败: {str(hash_error)}")
+                file_hash = None
+            
             # 创建PDF文档记录
             pdf_document = PDFDocument.objects.create(
                 title=title,
                 file_path=temp_file_path,
                 file_size=uploaded_file.size,
+                file_hash=file_hash,  # 添加哈希值
                 page_count=0,  # 后续处理时更新
                 milvus_connection_id=milvus_connection_id,
                 collection_name=collection_name,
