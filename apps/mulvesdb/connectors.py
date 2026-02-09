@@ -289,6 +289,19 @@ class MulvesDBConnector:
             logger.error(f"Milvus数据插入失败: {str(e)}")
             raise
     
+    def _log_query_sync(self, sql: str, execution_time: float, result_count: int = None, error: str = None):
+        """记录查询日志（同步版本）"""
+        try:
+            MulvesQueryLog.objects.create(
+                connection=self.config,
+                query_sql=sql[:1000],  # 限制长度
+                execution_time=execution_time,
+                result_count=result_count,
+                error_message=error[:500] if error else None
+            )
+        except Exception as e:
+            logger.error(f"记录查询日志失败: {str(e)}")
+    
     async def create_milvus_collection(self, collection_name: str, schema: Dict) -> bool:
         """创建Milvus集合
         

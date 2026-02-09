@@ -54,6 +54,14 @@ python test_milvus_final.py examples
 
 ## 相关文档
 
+### `FINAL_TEST_REPORT.md`
+- **内容**: 向量元数据追踪功能完整测试报告
+- **涵盖**: 测试结果汇总、功能验证、Bug修复记录
+
+### `METADATA_TESTING_SUMMARY.md`  
+- **内容**: 元数据追踪功能测试总结
+- **涵盖**: 功能特性确认、使用验证示例
+
 ### `BLOCK_DEDUPLICATION_IMPLEMENTATION_SUMMARY.md`
 - **内容**: 块级去重功能完整实施总结
 - **涵盖**: 技术架构、实现细节、集成情况、使用说明
@@ -64,3 +72,8 @@ python test_milvus_final.py examples
 
 ## 测试验证
 运行测试后会显示详细的执行过程和结果，确保所有功能正常工作。
+
+### 最新测试状态
+- ✅ **向量元数据追踪**: 核心功能和集成测试全部通过
+- ✅ **Milvus基础功能**: 写入、查询、统计等功能正常
+- ✅ **块级去重功能**: 哈希计算、去重管理等功能完备

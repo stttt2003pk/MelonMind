@@ -185,14 +185,18 @@ class PDFVectorStorageService:
             # 4. 更新本地数据库记录
             self._update_chunk_records(document_id, successful_chunks)
             
-            logger.info(f"成功存储 {len(successful_chunks)} 个分块向量")
+            # 5. 计算元数据追踪数量（基于成功存储的分块数）
+            metadata_tracked = len(successful_chunks)
+            
+            logger.info(f"成功存储 {len(successful_chunks)} 个分块向量，追踪 {metadata_tracked} 条元数据")
             
             return {
                 'success': True,
                 'stored_count': len(successful_chunks),
                 'total_chunks': len(chunks_data),
                 'failed_count': len(chunks_data) - len(successful_chunks),
-                'milvus_result': result
+                'milvus_result': result,
+                'metadata_tracked': metadata_tracked
             }
             
         except Exception as e:
