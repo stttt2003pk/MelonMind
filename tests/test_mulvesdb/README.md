@@ -48,6 +48,12 @@ pip install pymilvus==2.6.8
 # 执行核心测试
 python test_milvus_final.py
 
+# 运行元数据核心功能测试
+python test_core_metadata_functionality.py
+
+# 运行PDF Collection改造测试
+python test_collection_upgrade.py
+
 # 查看使用示例
 python test_milvus_final.py examples
 ```

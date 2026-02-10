@@ -331,7 +331,7 @@ class PDFProcessingPipeline:
         self.milvus_connection_id = milvus_connection_id
         self.vector_storage_service = PDFVectorStorageService(milvus_connection_id)
         
-    def process_pdf_document(self, pdf_document: PDFDocument, file_path: str) -> Dict[str, Any]:
+    def process_pdf_document(self, pdf_document: PDFDocument, file_path: str, use_existing_collection: bool = True) -> Dict[str, Any]:
         """
         完整的PDF文档处理流程
         
@@ -349,11 +349,33 @@ class PDFProcessingPipeline:
             pdf_document.mark_as_processing()
             logger.info("文档状态已标记为处理中")
             
-            # 1. 创建Milvus集合（在上下文管理器中）
-            logger.info(f"开始创建Milvus集合: {pdf_document.collection_name}")
+            # 1. 检查或创建Milvus集合（在上下文管理器中）
+            logger.info(f"开始处理Milvus集合: {pdf_document.collection_name}")
             with self.vector_storage_service as storage_service:
-                storage_service.create_document_collection(pdf_document.collection_name)
-                logger.info("Milvus集合创建完成")
+                if use_existing_collection:
+                    # 检查集合是否已存在
+                    try:
+                        collections_info = storage_service.get_collection_info(pdf_document.collection_name)
+                        if not collections_info.get('exists', False):
+                            # 如果是默认的 test 集合且不存在，返回错误
+                            if pdf_document.collection_name == 'test':
+                                raise ValueError(f"默认集合 'test' 不存在，请先创建该集合或指定其他存在的集合")
+                            
+                            logger.info(f"集合 {pdf_document.collection_name} 不存在，创建新集合")
+                            storage_service.create_document_collection(pdf_document.collection_name)
+                        else:
+                            logger.info(f"使用现有集合: {pdf_document.collection_name}")
+                    except Exception as e:
+                        # 如果是默认的 test 集合且检查失败，返回错误
+                        if pdf_document.collection_name == 'test':
+                            raise ValueError(f"无法访问默认集合 'test'，请确保该集合存在或指定其他集合: {str(e)}")
+                        
+                        logger.warning(f"检查集合时出错，尝试创建: {str(e)}")
+                        storage_service.create_document_collection(pdf_document.collection_name)
+                else:
+                    # 保持原来的动态创建行为
+                    storage_service.create_document_collection(pdf_document.collection_name)
+                logger.info("Milvus集合处理完成")
                 
                 # 2. 处理PDF文件
                 processor = PDFProcessor()

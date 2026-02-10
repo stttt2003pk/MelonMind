@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import PDFDocument, PDFChunk
+from .models import PDFDocument, PDFChunk, PDFCollectionConfig
 
 
 class PDFDocumentSerializer(serializers.ModelSerializer):
@@ -65,7 +65,8 @@ class PDFUploadSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=500, required=True)
     file = serializers.FileField(required=True)
     milvus_connection_id = serializers.IntegerField(required=True)
-    collection_name = serializers.CharField(max_length=100, required=True)
+    collection_config_id = serializers.IntegerField(required=False, help_text="预定义集合配置ID")
+    collection_name = serializers.CharField(max_length=100, required=False, help_text="自定义集合名称（不推荐）")
     
     def validate_file(self, value):
         """验证上传的文件"""
@@ -78,12 +79,37 @@ class PDFUploadSerializer(serializers.Serializer):
             
         return value
     
-    def validate_collection_name(self, value):
-        """验证集合名称"""
-        import re
-        if not re.match(r'^[a-zA-Z][a-zA-Z0-9_]*$', value):
-            raise serializers.ValidationError("集合名称只能包含字母、数字和下划线，且必须以字母开头")
-        return value
+    def validate(self, attrs):
+        """整体验证"""
+        # collection_config_id 和 collection_name 都是可选的
+        # 如果都没有提供，则使用默认的 test 集合
+        
+        # 如果提供了collection_config_id，验证其有效性
+        if attrs.get('collection_config_id'):
+            try:
+                collection_config = PDFCollectionConfig.objects.get(
+                    id=attrs['collection_config_id'], 
+                    is_active=True
+                )
+                attrs['resolved_collection_name'] = collection_config.milvus_collection_name
+                attrs['resolved_collection_config'] = collection_config
+            except PDFCollectionConfig.DoesNotExist:
+                raise serializers.ValidationError("指定的集合配置不存在或未激活")
+        
+        # 如果提供了collection_name，进行格式验证
+        elif attrs.get('collection_name'):
+            import re
+            if not re.match(r'^[a-zA-Z][a-zA-Z0-9_]*$', attrs['collection_name']):
+                raise serializers.ValidationError("集合名称只能包含字母、数字和下划线，且必须以字母开头")
+            attrs['resolved_collection_name'] = attrs['collection_name']
+            attrs['resolved_collection_config'] = None
+        
+        # 如果都没有提供，使用默认的 test 集合
+        else:
+            attrs['resolved_collection_name'] = 'test'
+            attrs['resolved_collection_config'] = None
+        
+        return attrs
 
 
 class VectorSearchSerializer(serializers.Serializer):

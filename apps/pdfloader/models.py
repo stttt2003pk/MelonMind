@@ -82,6 +82,89 @@ class PDFDocument(models.Model):
         return cls.objects.filter(file_hash=file_hash).exists()
 
 
+class PDFCollectionConfig(models.Model):
+    """PDF文档集合配置"""
+    
+    name = models.CharField(max_length=100, unique=True, verbose_name='集合名称')
+    description = models.TextField(blank=True, verbose_name='描述')
+    
+    # 关联的Milvus连接
+    milvus_connection = models.ForeignKey(
+        MulvesConnection,
+        on_delete=models.CASCADE,
+        related_name='pdf_collection_configs',
+        verbose_name='Milvus连接'
+    )
+    
+    # 集合在Milvus中的实际名称
+    milvus_collection_name = models.CharField(max_length=100, verbose_name='Milvus集合名称')
+    
+    # 状态管理
+    is_active = models.BooleanField(default=True, verbose_name='是否激活')
+    is_default = models.BooleanField(default=False, verbose_name='是否默认集合')
+    
+    # 配置信息
+    config_data = models.JSONField(default=dict, blank=True, verbose_name='配置数据')
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    class Meta:
+        db_table = 'pdf_collection_configs'
+        verbose_name = 'PDF集合配置'
+        verbose_name_plural = 'PDF集合配置'
+        ordering = ['-is_default', '-created_at']
+        indexes = [
+            models.Index(fields=['is_active']),
+            models.Index(fields=['is_default']),
+            models.Index(fields=['milvus_connection']),
+        ]
+
+    def __str__(self):
+        return f"{self.name} ({self.milvus_collection_name})"
+    
+    @classmethod
+    def get_default_collection(cls, milvus_connection_id=None):
+        """获取默认集合配置"""
+        try:
+            if milvus_connection_id:
+                return cls.objects.get(
+                    is_default=True, 
+                    is_active=True,
+                    milvus_connection_id=milvus_connection_id
+                )
+            else:
+                return cls.objects.get(is_default=True, is_active=True)
+        except cls.DoesNotExist:
+            # 如果没有默认配置，返回第一个激活的配置
+            try:
+                if milvus_connection_id:
+                    return cls.objects.filter(
+                        is_active=True,
+                        milvus_connection_id=milvus_connection_id
+                    ).first()
+                else:
+                    return cls.objects.filter(is_active=True).first()
+            except cls.DoesNotExist:
+                return None
+    
+    @classmethod
+    def collection_exists(cls, collection_name):
+        """检查集合配置是否存在"""
+        return cls.objects.filter(
+            milvus_collection_name=collection_name,
+            is_active=True
+        ).exists()
+    
+    @classmethod
+    def get_collection_by_name(cls, name):
+        """根据名称获取集合配置"""
+        try:
+            return cls.objects.get(name=name, is_active=True)
+        except cls.DoesNotExist:
+            return None
+
+
 class PDFChunk(models.Model):
     """PDF文档分块数据"""
     document = models.ForeignKey(

@@ -86,7 +86,10 @@ class PDFUploadView(APIView):
             uploaded_file = request.FILES['file']
             title = serializer.validated_data['title']
             milvus_connection_id = serializer.validated_data['milvus_connection_id']
-            collection_name = serializer.validated_data['collection_name']
+            
+            # 获取解析后的集合名称
+            resolved_collection_name = serializer.validated_data['resolved_collection_name']
+            resolved_collection_config = serializer.validated_data.get('resolved_collection_config')
             
             # 生成临时文件路径
             temp_filename = f"temp_{uploaded_file.name}"
@@ -142,7 +145,7 @@ class PDFUploadView(APIView):
                 file_hash=file_hash,  # 添加哈希值
                 page_count=0,  # 后续处理时更新
                 milvus_connection=milvus_connection,
-                collection_name=collection_name,
+                collection_name=resolved_collection_name,
                 status='uploaded'
             )
             
@@ -150,7 +153,9 @@ class PDFUploadView(APIView):
             pipeline = PDFProcessingPipeline(milvus_connection_id)
             try:
                 logger.info(f"开始处理PDF文档，连接ID: {milvus_connection_id}")
-                result = pipeline.process_pdf_document(pdf_document, temp_file_path)
+                logger.info(f"使用的集合名称: {resolved_collection_name}")
+                # 使用现有的集合而不是创建新的
+                result = pipeline.process_pdf_document(pdf_document, temp_file_path, use_existing_collection=True)
                 logger.info(f"PDF处理完成: {result}")
                 
                 # 更新文档状态为已完成

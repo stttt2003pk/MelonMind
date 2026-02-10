@@ -251,7 +251,8 @@ export default {
             formData.append('file', file.file)
             formData.append('title', file.name.replace('.pdf', ''))
             formData.append('milvus_connection_id', '1')
-            formData.append('collection_name', `pdf_docs_${Date.now()}`)
+            // collection_config_id 参数改为可选，如果不指定则后端默认使用test集合
+            // formData.append('collection_config_id', '1')
             
             const response = await pdfLoaderAPI.uploadPDF(formData, (percentCompleted) => {
               // 更新上传进度
