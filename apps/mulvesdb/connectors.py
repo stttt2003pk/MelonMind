@@ -40,9 +40,16 @@ class MulvesDBConnector:
         try:
             if MILVUS_AVAILABLE:
                 # 使用 Milvus 官方客户端
+                # 只有当用户名和密码都不为空时才使用token认证
+                token = None
+                if self.config.username and self.config.password:
+                    token = f"{self.config.username}:{self.config.password}"
+                elif self.config.username:
+                    token = self.config.username
+                
                 self._milvus_client = MilvusClient(
                     uri=f"http://{self.config.host}:{self.config.port}",
-                    token=f"{self.config.username}:{self.config.password}" if self.config.username else None
+                    token=token
                 )
                 logger.info(f"成功连接到Milvus数据库: {self.config.name}")
                 return True
@@ -69,11 +76,25 @@ class MulvesDBConnector:
     def connect_sync(self) -> bool:
         """建立数据库连接（同步版本）"""
         try:
+            logger.info(f"尝试连接到Milvus: {self.config.host}:{self.config.port}")
+            logger.info(f"用户名: '{self.config.username}', 密码: '{self.config.password}'")
+            
             if MILVUS_AVAILABLE:
                 # 使用 Milvus 官方客户端
+                # 只有当用户名和密码都不为空时才使用token认证
+                token = None
+                if self.config.username and self.config.password:
+                    token = f"{self.config.username}:{self.config.password}"
+                    logger.info(f"使用token认证: {token}")
+                elif self.config.username:
+                    token = self.config.username
+                    logger.info(f"使用用户名认证: {token}")
+                else:
+                    logger.info("不使用认证")
+                
                 self._milvus_client = MilvusClient(
                     uri=f"http://{self.config.host}:{self.config.port}",
-                    token=f"{self.config.username}:{self.config.password}" if self.config.username else None
+                    token=token
                 )
                 logger.info(f"成功连接到Milvus数据库: {self.config.name}")
                 return True
@@ -122,9 +143,9 @@ class MulvesDBConnector:
             # 使用 Milvus 客户端执行查询
             start_time = datetime.now()
             try:
-                # 对于 Milvus，我们执行健康检查而不是 SQL 查询
-                result = self._milvus_client.health()
-                results = [{'status': result}] if result else []
+                # 对于 Milvus，我们执行集合列表查询作为健康检查
+                collections = self._milvus_client.list_collections()
+                results = [{'collections_count': len(collections), 'collections': collections}]
                 
                 # 记录查询日志
                 execution_time = (datetime.now() - start_time).total_seconds() * 1000
@@ -173,9 +194,9 @@ class MulvesDBConnector:
             # 使用 Milvus 客户端执行查询
             start_time = datetime.now()
             try:
-                # 对于 Milvus，我们执行健康检查而不是 SQL 查询
-                result = self._milvus_client.health()
-                results = [{'status': result}] if result else []
+                # 对于 Milvus，我们执行集合列表查询作为健康检查
+                collections = self._milvus_client.list_collections()
+                results = [{'collections_count': len(collections), 'collections': collections}]
                 
                 # 记录查询日志
                 execution_time = (datetime.now() - start_time).total_seconds() * 1000
@@ -246,12 +267,15 @@ class MulvesDBConnector:
             logger.error(f"非查询语句执行失败: {str(e)}")
             raise
             
-    async def insert_milvus_data(self, collection_name: str, data: List[Dict]) -> Dict[str, Any]:
-        """向Milvus集合插入数据
+    async def insert_milvus_data(self, collection_name: str, data: List[Dict], 
+                                enable_dedup: bool = True, document_id: Optional[int] = None) -> Dict[str, Any]:
+        """向Milvus集合插入数据（支持去重）
         
         Args:
             collection_name (str): 集合名称
             data (List[Dict]): 要插入的数据列表，每个字典代表一条记录
+            enable_dedup (bool): 是否启用去重功能
+            document_id (Optional[int]): 文档ID，用于去重计算
         
         Returns:
             Dict[str, Any]: 插入结果信息
@@ -266,19 +290,32 @@ class MulvesDBConnector:
             if collection_name not in collections:
                 raise ValueError(f"集合 '{collection_name}' 不存在")
             
+            # 处理去重逻辑
+            original_count = len(data)
+            filtered_data = data
+            filtered_count = 0
+            
+            if enable_dedup and document_id:
+                from apps.mulvesdb.utils import filter_duplicate_chunks
+                filtered_data = filter_duplicate_chunks(data, document_id)
+                filtered_count = original_count - len(filtered_data)
+                logger.info(f"去重处理: 原始 {original_count} 条，过滤后 {len(filtered_data)} 条")
+            
             # 插入数据
             result = self._milvus_client.insert(
                 collection_name=collection_name,
-                data=data
+                data=filtered_data
             )
             
             # 记录操作日志
             execution_time = (datetime.now() - start_time).total_seconds() * 1000
-            await self._log_query(f"INSERT INTO {collection_name}", execution_time, len(data))
+            await self._log_query(f"INSERT INTO {collection_name}", execution_time, len(filtered_data))
             
             return {
                 'success': True,
-                'insert_count': len(data),
+                'insert_count': len(filtered_data),
+                'original_count': original_count,
+                'filtered_count': filtered_count,
                 'ids': result.primary_keys if hasattr(result, 'primary_keys') else [],
                 'execution_time_ms': execution_time
             }
@@ -286,6 +323,65 @@ class MulvesDBConnector:
         except Exception as e:
             execution_time = (datetime.now() - start_time).total_seconds() * 1000
             await self._log_query(f"INSERT INTO {collection_name}", execution_time, error=str(e))
+            logger.error(f"Milvus数据插入失败: {str(e)}")
+            raise
+
+    def insert_milvus_data_sync(self, collection_name: str, data: List[Dict], 
+                               enable_dedup: bool = True, document_id: Optional[int] = None) -> Dict[str, Any]:
+        """向Milvus集合插入数据（同步版本，支持去重）
+        
+        Args:
+            collection_name (str): 集合名称
+            data (List[Dict]): 要插入的数据列表，每个字典代表一条记录
+            enable_dedup (bool): 是否启用去重功能
+            document_id (Optional[int]): 文档ID，用于去重计算
+        
+        Returns:
+            Dict[str, Any]: 插入结果信息
+        """
+        if not self._milvus_client:
+            raise ConnectionError("Milvus客户端未连接")
+            
+        start_time = datetime.now()
+        try:
+            # 检查集合是否存在
+            collections = self._milvus_client.list_collections()
+            if collection_name not in collections:
+                raise ValueError(f"集合 '{collection_name}' 不存在")
+            
+            # 处理去重逻辑
+            original_count = len(data)
+            filtered_data = data
+            filtered_count = 0
+            
+            if enable_dedup and document_id:
+                from apps.mulvesdb.utils import filter_duplicate_chunks
+                filtered_data = filter_duplicate_chunks(data, document_id)
+                filtered_count = original_count - len(filtered_data)
+                logger.info(f"去重处理: 原始 {original_count} 条，过滤后 {len(filtered_data)} 条")
+            
+            # 插入数据
+            result = self._milvus_client.insert(
+                collection_name=collection_name,
+                data=filtered_data
+            )
+            
+            # 记录操作日志
+            execution_time = (datetime.now() - start_time).total_seconds() * 1000
+            self._log_query_sync(f"INSERT INTO {collection_name}", execution_time, len(filtered_data))
+            
+            return {
+                'success': True,
+                'insert_count': len(filtered_data),
+                'original_count': original_count,
+                'filtered_count': filtered_count,
+                'ids': result.primary_keys if hasattr(result, 'primary_keys') else [],
+                'execution_time_ms': execution_time
+            }
+            
+        except Exception as e:
+            execution_time = (datetime.now() - start_time).total_seconds() * 1000
+            self._log_query_sync(f"INSERT INTO {collection_name}", execution_time, error=str(e))
             logger.error(f"Milvus数据插入失败: {str(e)}")
             raise
     
@@ -326,6 +422,82 @@ class MulvesDBConnector:
             self._milvus_client.create_collection(
                 collection_name=collection_name,
                 schema=schema
+            )
+            
+            logger.info(f"成功创建集合: {collection_name}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"创建Milvus集合失败: {str(e)}")
+            raise
+    
+    def create_milvus_collection_sync(self, collection_name: str, schema: Dict) -> bool:
+        """创建Milvus集合（同步版本）
+        
+        Args:
+            collection_name (str): 集合名称
+            schema (Dict): 集合schema定义
+        
+        Returns:
+            bool: 创建是否成功
+        """
+        if not self._milvus_client:
+            raise ConnectionError("Milvus客户端未连接")
+            
+        try:
+            # 检查集合是否已存在
+            collections = self._milvus_client.list_collections()
+            if collection_name in collections:
+                logger.warning(f"集合 '{collection_name}' 已存在")
+                return True
+            
+            # 转换schema格式为pymilvus要求的格式
+            from pymilvus import CollectionSchema, FieldSchema, DataType
+            
+            fields = []
+            for field_def in schema['fields']:
+                field_type = field_def['type']
+                dtype = None
+                
+                # 映射类型
+                if field_type == 'INT64':
+                    dtype = DataType.INT64
+                elif field_type == 'VARCHAR':
+                    dtype = DataType.VARCHAR
+                elif field_type == 'FLOAT_VECTOR':
+                    dtype = DataType.FLOAT_VECTOR
+                elif field_type == 'JSON':
+                    dtype = DataType.JSON
+                else:
+                    raise ValueError(f"不支持的字段类型: {field_type}")
+                
+                field_args = {
+                    'name': field_def['name'],
+                    'dtype': dtype
+                }
+                
+                # 添加额外参数
+                if 'is_primary' in field_def:
+                    field_args['is_primary'] = field_def['is_primary']
+                if 'auto_id' in field_def:
+                    field_args['auto_id'] = field_def['auto_id']
+                if 'max_length' in field_def:
+                    field_args['max_length'] = field_def['max_length']
+                if 'dim' in field_def:
+                    field_args['dim'] = field_def['dim']
+                
+                fields.append(FieldSchema(**field_args))
+            
+            # 创建CollectionSchema对象
+            collection_schema = CollectionSchema(
+                fields=fields,
+                description=schema.get('description', '')
+            )
+            
+            # 创建集合
+            self._milvus_client.create_collection(
+                collection_name=collection_name,
+                schema=collection_schema
             )
             
             logger.info(f"成功创建集合: {collection_name}")

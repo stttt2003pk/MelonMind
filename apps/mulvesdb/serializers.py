@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import MulvesConnection, MulvesQueryLog, MulvesDataCache
+from .models import MulvesConnection, MulvesQueryLog, MulvesDataCache, VectorMetadata
 
 
 class MulvesConnectionSerializer(serializers.ModelSerializer):
@@ -112,3 +112,58 @@ class MulvesTestConnectionSerializer(serializers.Serializer):
         max_value=300,
         help_text='连接超时时间(秒)'
     )
+
+
+class VectorMetadataSerializer(serializers.ModelSerializer):
+    """向量元数据序列化器"""
+    
+    class Meta:
+        model = VectorMetadata
+        fields = [
+            'id', 'vector_id', 'collection_name', 'source_document_id',
+            'source_chunk_index', 'source_app', 'embedding_model',
+            'embedding_dimensions', 'processing_time_ms', 'content_length',
+            'page_number', 'content_preview', 'document_category', 'tags',
+            'importance_level', 'created_by', 'status', 'created_at',
+            'updated_at', 'last_accessed'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def validate_importance_level(self, value):
+        """验证重要性等级"""
+        if not 1 <= value <= 5:
+            raise serializers.ValidationError("重要性等级必须在1-5之间")
+        return value
+
+    def validate_tags(self, value):
+        """验证标签格式"""
+        if not isinstance(value, list):
+            raise serializers.ValidationError("标签必须是列表格式")
+        return value
+
+
+class VectorMetadataCreateSerializer(VectorMetadataSerializer):
+    """向量元数据创建序列化器"""
+    
+    class Meta(VectorMetadataSerializer.Meta):
+        read_only_fields = ['id', 'created_at', 'updated_at', 'last_accessed']
+
+
+class VectorMetadataUpdateSerializer(serializers.ModelSerializer):
+    """向量元数据更新序列化器"""
+    
+    class Meta:
+        model = VectorMetadata
+        fields = [
+            'document_category', 'tags', 'importance_level', 'status'
+        ]
+
+    def validate_importance_level(self, value):
+        if not 1 <= value <= 5:
+            raise serializers.ValidationError("重要性等级必须在1-5之间")
+        return value
+
+    def validate_tags(self, value):
+        if not isinstance(value, list):
+            raise serializers.ValidationError("标签必须是列表格式")
+        return value

@@ -148,9 +148,13 @@
 <script>
 import { ref, computed } from 'vue'
 import { pdfLoaderAPI, knowledgeBaseAPI } from '@/services/api'
+import FilePreview from '@/components/FilePreview.vue'
 
 export default {
   name: 'PDFLoaderView',
+  components: {
+    FilePreview
+  },
   setup() {
     // 响应式数据
     const fileList = ref([])
@@ -245,7 +249,9 @@ export default {
             // 调用后端API上传文件
             const formData = new FormData()
             formData.append('file', file.file)
-            formData.append('filename', file.name)
+            formData.append('title', file.name.replace('.pdf', ''))
+            formData.append('milvus_connection_id', '1')
+            formData.append('collection_name', `pdf_docs_${Date.now()}`)
             
             const response = await pdfLoaderAPI.uploadPDF(formData, (percentCompleted) => {
               // 更新上传进度

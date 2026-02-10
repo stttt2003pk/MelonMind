@@ -6,11 +6,12 @@ from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
-from .models import MulvesConnection, MulvesQueryLog, MulvesDataCache
+from .models import MulvesConnection, MulvesQueryLog, MulvesDataCache, VectorMetadata
 from .serializers import (
     MulvesConnectionSerializer, MulvesConnectionDetailSerializer,
     MulvesQueryLogSerializer, MulvesDataCacheSerializer,
-    MulvesQueryRequestSerializer, MulvesTestConnectionSerializer
+    MulvesQueryRequestSerializer, MulvesTestConnectionSerializer,
+    VectorMetadataSerializer, VectorMetadataCreateSerializer, VectorMetadataUpdateSerializer
 )
 from .local_config import MilvusLocalConfig
 from .connectors import MulvesDBService
@@ -257,3 +258,161 @@ class MulvesQueryViewSet(viewsets.ViewSet):
                 )
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VectorMetadataViewSet(viewsets.ModelViewSet):
+    """向量元数据视图集"""
+    queryset = VectorMetadata.objects.all()
+    serializer_class = VectorMetadataSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return VectorMetadataCreateSerializer
+        elif self.action in ['update', 'partial_update']:
+            return VectorMetadataUpdateSerializer
+        return super().get_serializer_class()
+    
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'collection_name', 
+                openapi.IN_QUERY, 
+                description="集合名称", 
+                type=openapi.TYPE_STRING
+            ),
+            openapi.Parameter(
+                'source_document_id', 
+                openapi.IN_QUERY, 
+                description="源文档ID", 
+                type=openapi.TYPE_INTEGER
+            ),
+            openapi.Parameter(
+                'status', 
+                openapi.IN_QUERY, 
+                description="状态", 
+                type=openapi.TYPE_STRING
+            )
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        """获取向量元数据列表"""
+        collection_name = request.query_params.get('collection_name')
+        source_document_id = request.query_params.get('source_document_id')
+        status_filter = request.query_params.get('status')
+        
+        queryset = self.get_queryset()
+        
+        if collection_name:
+            queryset = queryset.filter(collection_name=collection_name)
+        if source_document_id:
+            queryset = queryset.filter(source_document_id=source_document_id)
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+            
+        self.queryset = queryset.order_by('-created_at')
+        return super().list(request, *args, **kwargs)
+    
+    @swagger_auto_schema(
+        method='get',
+        responses={200: openapi.Response('按文档统计信息')}
+    )
+    @action(detail=False, methods=['get'], url_path='stats-by-document')
+    def stats_by_document(self, request):
+        """按文档统计向量元数据"""
+        collection_name = request.query_params.get('collection_name')
+        
+        queryset = self.get_queryset()
+        if collection_name:
+            queryset = queryset.filter(collection_name=collection_name)
+            
+        # 按文档ID分组统计
+        from django.db.models import Count, Avg
+        stats = queryset.values('source_document_id', 'collection_name').annotate(
+            vector_count=Count('id'),
+            avg_processing_time=Avg('processing_time_ms'),
+            avg_importance=Avg('importance_level')
+        ).order_by('-vector_count')
+        
+        return Response(stats)
+    
+    @swagger_auto_schema(
+        method='post',
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'vector_ids': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(type=openapi.TYPE_STRING),
+                    description='向量ID列表'
+                ),
+                'collection_name': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='集合名称'
+                )
+            },
+            required=['vector_ids', 'collection_name']
+        ),
+        responses={200: openapi.Response('批量操作结果')}
+    )
+    @action(detail=False, methods=['post'], url_path='bulk-archive')
+    def bulk_archive(self, request):
+        """批量归档向量元数据"""
+        vector_ids = request.data.get('vector_ids', [])
+        collection_name = request.data.get('collection_name')
+        
+        if not vector_ids or not collection_name:
+            return Response(
+                {'success': False, 'message': '请提供向量ID列表和集合名称'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            affected_count = VectorMetadata.objects.filter(
+                vector_id__in=vector_ids,
+                collection_name=collection_name
+            ).update(status='archived')
+            
+            return Response({
+                'success': True,
+                'message': f'成功归档 {affected_count} 条记录',
+                'affected_count': affected_count
+            })
+        except Exception as e:
+            return Response(
+                {'success': False, 'message': f'批量归档失败: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @swagger_auto_schema(
+        method='post',
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'days_old': openapi.Schema(
+                    type=openapi.TYPE_INTEGER,
+                    description='清理多少天前的数据'
+                )
+            }
+        ),
+        responses={200: openapi.Response('清理结果')}
+    )
+    @action(detail=False, methods=['post'], url_path='cleanup-old')
+    def cleanup_old(self, request):
+        """清理旧的向量元数据"""
+        days_old = request.data.get('days_old', 90)
+        
+        try:
+            deleted_count = VectorMetadata.cleanup_old_metadata(days_old)
+            
+            return Response({
+                'success': True,
+                'message': f'成功清理 {deleted_count} 条旧记录',
+                'deleted_count': deleted_count,
+                'days_old': days_old
+            })
+        except Exception as e:
+            return Response(
+                {'success': False, 'message': f'清理失败: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

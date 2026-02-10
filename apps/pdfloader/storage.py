@@ -37,15 +37,19 @@ class PDFVectorStorageService:
     def _connect_to_milvus(self):
         """连接到Milvus数据库"""
         try:
+            logger.info(f"尝试连接Milvus，连接ID: {self.milvus_connection_id}")
             connection = MulvesConnection.objects.get(
                 id=self.milvus_connection_id, 
                 is_active=True
             )
+            logger.info(f"获取到连接配置: {connection.name}")
             self.milvus_connector = MulvesDBConnector(connection)
+            logger.info("创建MulvesDBConnector实例成功")
             self.milvus_connector.connect_sync()
             logger.info(f"成功连接到Milvus: {connection.name}")
         except Exception as e:
             logger.error(f"连接Milvus失败: {str(e)}")
+            logger.exception("详细错误信息:")
             raise ConnectionError(f"无法连接到Milvus数据库: {str(e)}")
             
     def _disconnect_from_milvus(self):
@@ -230,8 +234,8 @@ class PDFVectorStorageService:
             logger.error(f"更新chunk记录失败: {str(e)}")
             raise
     
-    def search_similar_chunks(self, collection_name: str, query_text: str, 
-                             limit: int = 10) -> List[Dict]:
+    def search_similar_chunks_sync(self, collection_name: str, query_text: str, 
+                                  limit: int = 10) -> List[Dict]:
         """
         搜索相似的文档分块
         
@@ -323,6 +327,7 @@ class PDFProcessingPipeline:
     """PDF处理流水线"""
     
     def __init__(self, milvus_connection_id: int):
+        logger.info(f"初始化PDFProcessingPipeline，连接ID: {milvus_connection_id}")
         self.milvus_connection_id = milvus_connection_id
         self.vector_storage_service = PDFVectorStorageService(milvus_connection_id)
         
@@ -342,19 +347,22 @@ class PDFProcessingPipeline:
         try:
             # 标记为处理中
             pdf_document.mark_as_processing()
+            logger.info("文档状态已标记为处理中")
             
-            # 1. 创建Milvus集合
-            self.vector_storage_service.create_document_collection(pdf_document.collection_name)
-            
-            # 2. 处理PDF文件
-            processor = PDFProcessor()
-            chunks_data = list(processor.process_pdf(file_path))
-            
-            if not chunks_data:
-                raise ValueError("PDF文件处理后没有生成任何有效分块")
-            
-            # 3. 存储向量
+            # 1. 创建Milvus集合（在上下文管理器中）
+            logger.info(f"开始创建Milvus集合: {pdf_document.collection_name}")
             with self.vector_storage_service as storage_service:
+                storage_service.create_document_collection(pdf_document.collection_name)
+                logger.info("Milvus集合创建完成")
+                
+                # 2. 处理PDF文件
+                processor = PDFProcessor()
+                chunks_data = list(processor.process_pdf(file_path))
+                
+                if not chunks_data:
+                    raise ValueError("PDF文件处理后没有生成任何有效分块")
+                
+                # 3. 存储向量
                 result = storage_service.store_pdf_chunks(
                     document_id=pdf_document.id,
                     chunks_data=[{

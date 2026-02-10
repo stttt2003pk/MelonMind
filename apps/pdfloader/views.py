@@ -12,6 +12,7 @@ from django.core.files.base import ContentFile
 from django.conf import settings
 
 from apps.common.exceptions import MelonMindException
+from apps.mulvesdb.models import MulvesConnection
 from .models import PDFDocument, PDFChunk
 from .utils import calculate_file_hash, get_existing_document_by_hash
 from .serializers import (
@@ -127,6 +128,12 @@ class PDFUploadView(APIView):
                 logger.warning(f"计算文件哈希失败: {str(hash_error)}")
                 file_hash = None
             
+            # 获取Milvus连接对象
+            try:
+                milvus_connection = MulvesConnection.objects.get(id=milvus_connection_id, is_active=True)
+            except MulvesConnection.DoesNotExist:
+                raise ValueError(f"无效的Milvus连接ID: {milvus_connection_id}")
+            
             # 创建PDF文档记录
             pdf_document = PDFDocument.objects.create(
                 title=title,
@@ -134,7 +141,7 @@ class PDFUploadView(APIView):
                 file_size=uploaded_file.size,
                 file_hash=file_hash,  # 添加哈希值
                 page_count=0,  # 后续处理时更新
-                milvus_connection_id=milvus_connection_id,
+                milvus_connection=milvus_connection,
                 collection_name=collection_name,
                 status='uploaded'
             )
@@ -142,6 +149,7 @@ class PDFUploadView(APIView):
             # 同步处理PDF文档
             pipeline = PDFProcessingPipeline(milvus_connection_id)
             try:
+                logger.info(f"开始处理PDF文档，连接ID: {milvus_connection_id}")
                 result = pipeline.process_pdf_document(pdf_document, temp_file_path)
                 logger.info(f"PDF处理完成: {result}")
                 
@@ -235,13 +243,13 @@ class VectorSearchView(APIView):
             
             # 执行向量搜索
             from .storage import PDFVectorStorageService
-            import asyncio
             storage_service = PDFVectorStorageService(active_connection.id)
-            results = asyncio.run(storage_service.search_similar_chunks(
-                collection_name=collection_name,
-                query_text=query_text,
-                limit=limit
-            ))
+            with storage_service as service:
+                results = service.search_similar_chunks_sync(
+                    collection_name=collection_name,
+                    query_text=query_text,
+                    limit=limit
+                )
             
             return Response({
                 'success': True,
