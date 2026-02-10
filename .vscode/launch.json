@@ -1,0 +1,108 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Django Server",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
+            "args": [
+                "runserver",
+                "8000"
+            ],
+            "django": true,
+            "justMyCode": false,
+            "env": {
+                "DJANGO_SETTINGS_MODULE": "config.settings",
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "stopOnEntry": false
+        },
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Python: Debug Tests",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/.venv/bin/pytest",
+            "args": [
+                "-v",
+                "--tb=short",
+                "${file}"
+            ],
+            "django": true,
+            "justMyCode": false,
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "DJANGO_SETTINGS_MODULE": "config.settings",
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Python: Run All Tests",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "tests/",
+                "-v",
+                "--tb=short"
+            ],
+            "django": true,
+            "justMyCode": false,
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "DJANGO_SETTINGS_MODULE": "config.settings",
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Python: Celery Worker",
+            "type": "python",
+            "request": "launch",
+            "module": "celery",
+            "args": [
+                "-A",
+                "config",
+                "worker",
+                "--loglevel=info"
+            ],
+            "django": true,
+            "justMyCode": false,
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "DJANGO_SETTINGS_MODULE": "config.settings",
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Python: Shell Plus",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
+            "args": [
+                "shell_plus"
+            ],
+            "django": true,
+            "justMyCode": false,
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "DJANGO_SETTINGS_MODULE": "config.settings",
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        }
+    ]
+}
