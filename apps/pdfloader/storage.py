@@ -316,6 +316,8 @@ class PDFVectorStorageService:
             collections_info = self.milvus_connector.get_milvus_collections_info_sync()
             for info in collections_info:
                 if info['name'] == collection_name:
+                    # 确保返回的对象包含exists字段
+                    info['exists'] = True
                     return info
             return {'name': collection_name, 'exists': False}
         except Exception as e:
@@ -354,24 +356,26 @@ class PDFProcessingPipeline:
             with self.vector_storage_service as storage_service:
                 if use_existing_collection:
                     # 检查集合是否已存在
+                    collection_exists = False
                     try:
                         collections_info = storage_service.get_collection_info(pdf_document.collection_name)
-                        if not collections_info.get('exists', False):
-                            # 如果是默认的 test 集合且不存在，返回错误
-                            if pdf_document.collection_name == 'test':
-                                raise ValueError(f"默认集合 'test' 不存在，请先创建该集合或指定其他存在的集合")
-                            
-                            logger.info(f"集合 {pdf_document.collection_name} 不存在，创建新集合")
-                            storage_service.create_document_collection(pdf_document.collection_name)
-                        else:
+                        collection_exists = collections_info.get('exists', False)
+                        if collection_exists:
                             logger.info(f"使用现有集合: {pdf_document.collection_name}")
+                        else:
+                            logger.info(f"集合 {pdf_document.collection_name} 不存在")
                     except Exception as e:
-                        # 如果是默认的 test 集合且检查失败，返回错误
-                        if pdf_document.collection_name == 'test':
-                            raise ValueError(f"无法访问默认集合 'test'，请确保该集合存在或指定其他集合: {str(e)}")
-                        
-                        logger.warning(f"检查集合时出错，尝试创建: {str(e)}")
-                        storage_service.create_document_collection(pdf_document.collection_name)
+                        logger.warning(f"检查集合时出错: {str(e)}，将尝试创建集合")
+                        collection_exists = False
+                    
+                    # 如果集合不存在，创建它
+                    if not collection_exists:
+                        try:
+                            logger.info(f"创建集合: {pdf_document.collection_name}")
+                            storage_service.create_document_collection(pdf_document.collection_name)
+                        except Exception as e:
+                            logger.error(f"创建集合失败: {str(e)}")
+                            raise
                 else:
                     # 保持原来的动态创建行为
                     storage_service.create_document_collection(pdf_document.collection_name)
