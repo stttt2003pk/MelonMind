@@ -115,7 +115,7 @@ const createUploadClient = () => {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
-    withCredentials: true,
+    withCredentials: false,
     // 上传进度回调
     onUploadProgress: (progressEvent) => {
       const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);

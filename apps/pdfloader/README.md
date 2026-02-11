@@ -231,7 +231,10 @@ embedding_service = get_embedding_service()
 embeddings = embedding_service.embed_batch([chunk.content for chunk in chunks])
 
 # 存储到Milvus
+# 方式1: 使用连接ID（传统方式）
 pipeline = PDFProcessingPipeline(milvus_connection_id=1)
+# 方式2: 使用已建立的连接器（推荐）
+pipeline = PDFProcessingPipeline(milvus_connection_id=1, milvus_connector=existing_connector)
 # 异步处理
 import asyncio
 asyncio.run(pipeline.process_pdf_document(document, 'document.pdf'))

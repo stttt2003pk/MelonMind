@@ -7,6 +7,7 @@ from apps.mulvesdb.connectors import MulvesDBConnector
 from apps.mulvesdb.models import MulvesConnection
 from .models import PDFDocument, PDFChunk
 from .embedding import get_embedding_service, EmbeddingResult
+import logging
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,35 @@ class PDFVectorStorageService:
         if self.milvus_connector:
             self.milvus_connector.disconnect_sync()
             self.milvus_connector = None
-            
+
+
+class PDFVectorStorageServiceWithConnector:
+    """使用已有连接器的PDF向量存储服务"""
+    
+    def __init__(self, milvus_connector: MulvesDBConnector):
+        """
+        初始化向量存储服务（使用已有连接器）
+        
+        Args:
+            milvus_connector (MulvesDBConnector): 已建立的Milvus连接器
+        """
+        self.milvus_connector = milvus_connector
+        self.embedding_service = get_embedding_service()
+        
+    def __enter__(self):
+        """同步上下文管理器入口 - 不需要重新连接"""
+        logger.info("使用已建立的Milvus连接器")
+        # 验证连接是否有效
+        if not self.milvus_connector._milvus_client:
+            raise ConnectionError("提供的Milvus连接器未连接")
+        return self
+        
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """同步上下文管理器出口 - 不主动断开连接（由调用方负责）"""
+        logger.info("退出PDFVectorStorageServiceWithConnector上下文")
+        # 不主动断开连接，因为连接是由外部管理的
+        pass
+        
     def create_document_collection(self, collection_name: str) -> bool:
         """
         创建文档向量集合
@@ -199,8 +228,8 @@ class PDFVectorStorageService:
                 'stored_count': len(successful_chunks),
                 'total_chunks': len(chunks_data),
                 'failed_count': len(chunks_data) - len(successful_chunks),
-                'milvus_result': result,
-                'metadata_tracked': metadata_tracked
+                'metadata_tracked': metadata_tracked,
+                'details': result
             }
             
         except Exception as e:
@@ -208,90 +237,73 @@ class PDFVectorStorageService:
             raise
     
     def _update_chunk_records(self, document_id: int, successful_chunks: List[Dict]):
-        """
-        更新本地chunk记录
-        
-        Args:
-            document_id (int): 文档ID
-            successful_chunks (List[Dict]): 成功处理的分块数据
-        """
+        """更新本地分块记录"""
         try:
             with transaction.atomic():
-                document = PDFDocument.objects.select_for_update().get(id=document_id)
-                
-                for chunk_info in successful_chunks:
-                    PDFChunk.objects.create(
-                        document=document,
-                        chunk_index=chunk_info['chunk_index'],
-                        content=chunk_info['embedding_result'].text,
-                        page_number=chunk_info['embedding_result'].metadata.get('page_number', 0),
-                        vector_id=chunk_info['vector_id'],
-                        embedding_model='qwen',
-                        metadata=chunk_info['embedding_result'].metadata
+                # 创建分块记录
+                chunk_objects = [
+                    PDFChunk(
+                        document_id=document_id,
+                        chunk_index=chunk['chunk_index'],
+                        vector_id=chunk['vector_id'],
+                        embedding_model=self.embedding_service.get_model_name(),
+                        embedding_provider=self.embedding_service.get_provider_name()
                     )
-                    
+                    for chunk in successful_chunks
+                ]
+                PDFChunk.objects.bulk_create(chunk_objects)
+                logger.info(f"创建了 {len(chunk_objects)} 个本地分块记录")
         except Exception as e:
-            logger.error(f"更新chunk记录失败: {str(e)}")
-            raise
+            logger.error(f"更新本地分块记录失败: {str(e)}")
+            # 不抛出异常，因为这不影响主要的向量存储
     
     def search_similar_chunks_sync(self, collection_name: str, query_text: str, 
-                                  limit: int = 10) -> List[Dict]:
+                                 limit: int = 10) -> List[Dict]:
         """
-        搜索相似的文档分块
+        同步向量相似度搜索
         
         Args:
             collection_name (str): 集合名称
             query_text (str): 查询文本
-            limit (int): 返回结果数量
+            limit (int): 返回结果数量限制
             
         Returns:
-            List[Dict]: 相似分块列表
+            List[Dict]: 搜索结果
         """
         if not self.milvus_connector:
             raise ConnectionError("未连接到Milvus")
             
         try:
             # 生成查询文本的embedding
-            query_embedding = self.embedding_service.embed_text(query_text)
+            embedding_result = self.embedding_service.embed_text(query_text)
+            if embedding_result.metadata.get('failed', False):
+                raise Exception("查询文本embedding生成失败")
             
-            # 在Milvus中搜索
-            raw_results = self.milvus_connector.execute_milvus_vector_search_sync(
+            query_vector = embedding_result.embedding
+            
+            # 执行向量搜索
+            search_result = self.milvus_connector._milvus_client.search(
                 collection_name=collection_name,
-                vector_field="embedding",
-                query_vector=query_embedding.embedding,
-                limit=limit
+                data=[query_vector],
+                anns_field="embedding",
+                search_params={"metric_type": "L2", "params": {"nprobe": 10}},
+                limit=limit,
+                output_fields=["content", "page_number", "chunk_index", "metadata"]
             )
             
-            # 转换Milvus结果为标准格式
+            # 格式化结果
             formatted_results = []
-            if raw_results and len(raw_results) > 0:
-                # Milvus搜索结果通常是嵌套的列表
-                search_result = raw_results[0] if isinstance(raw_results, list) else raw_results
-                
-                # 处理搜索结果中的实体
-                if hasattr(search_result, 'entities'):
-                    entities = search_result.entities
-                    for i, entity in enumerate(entities[:limit]):
-                        formatted_results.append({
-                            'id': entity.get('vector_id', f'vector_{i}'),
-                            'content': entity.get('content', ''),
-                            'similarity': 1.0 - (entity.get('distance', 0) / 2.0),  # 转换距离为相似度
-                            'page_number': entity.get('page_number', 1),
-                            'chunk_index': entity.get('chunk_index', 0),
-                            'metadata': entity.get('metadata', {})
-                        })
-                else:
-                    # 如果是字典格式，直接处理
-                    if isinstance(search_result, list):
-                        for i, item in enumerate(search_result[:limit]):
-                            formatted_results.append({
-                                'id': item.get('vector_id', f'vector_{i}'),
-                                'content': item.get('content', ''),
-                                'similarity': 1.0 - (item.get('distance', 0) / 2.0),
-                                'page_number': item.get('page_number', 1),
-                                'chunk_index': item.get('chunk_index', 0),
-                                'metadata': item.get('metadata', {})
-                            })
+            if search_result and len(search_result) > 0:
+                for item in search_result[0]:
+                    formatted_results.append({
+                        'id': item.get('id'),
+                        'content': item.get('content', ''),
+                        'distance': item.get('distance', 0),
+                        'similarity': 1.0 - (item.get('distance', 0) / 2.0),
+                        'page_number': item.get('page_number', 1),
+                        'chunk_index': item.get('chunk_index', 0),
+                        'metadata': item.get('metadata', {})
+                    })
             
             return formatted_results
             
@@ -328,10 +340,17 @@ class PDFVectorStorageService:
 class PDFProcessingPipeline:
     """PDF处理流水线"""
     
-    def __init__(self, milvus_connection_id: int):
+    def __init__(self, milvus_connection_id: int, milvus_connector=None):
         logger.info(f"初始化PDFProcessingPipeline，连接ID: {milvus_connection_id}")
         self.milvus_connection_id = milvus_connection_id
-        self.vector_storage_service = PDFVectorStorageService(milvus_connection_id)
+        if milvus_connector:
+            # 使用已有的连接器
+            logger.info("使用传入的Milvus连接器")
+            self.vector_storage_service = PDFVectorStorageServiceWithConnector(milvus_connector)
+        else:
+            # 使用传统的连接方式
+            logger.info("使用传统Milvus连接方式")
+            self.vector_storage_service = PDFVectorStorageService(milvus_connection_id)
         
     def process_pdf_document(self, pdf_document: PDFDocument, file_path: str, use_existing_collection: bool = True) -> Dict[str, Any]:
         """

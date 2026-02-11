@@ -70,7 +70,6 @@ class PDFUploadView(APIView):
         请求参数:
         - title: 文档标题
         - file: PDF文件
-        - milvus_connection_id: Milvus连接ID
         - collection_name: 集合名称
         """
         serializer = PDFUploadSerializer(data=request.data)
@@ -85,38 +84,38 @@ class PDFUploadView(APIView):
             # 保存上传的文件
             uploaded_file = request.FILES['file']
             title = serializer.validated_data['title']
-            milvus_connection_id = serializer.validated_data['milvus_connection_id']
-            
+            # milvus_connection_id = serializer.validated_data['milvus_connection_id']
+
             # 获取解析后的集合名称
             resolved_collection_name = serializer.validated_data['resolved_collection_name']
             resolved_collection_config = serializer.validated_data.get('resolved_collection_config')
-            
+
             # 生成临时文件路径
             temp_filename = f"temp_{uploaded_file.name}"
             temp_file_path = os.path.join(tempfile.gettempdir(), temp_filename)
-            
+
             # 保存文件到临时位置
             with open(temp_file_path, 'wb+') as destination:
                 for chunk in uploaded_file.chunks():
                     destination.write(chunk)
-            
+
             # 计算文件哈希值用于去重检查
             try:
                 file_hash = calculate_file_hash(temp_file_path)
                 logger.debug(f"文件哈希值: {file_hash}")
-                
+
                 # 检查是否为重复文档
                 existing_document = get_existing_document_by_hash(file_hash)
                 if existing_document:
                     logger.info(f"发现重复文档: {existing_document.title} (ID: {existing_document.id})")
-                    
+
                     # 清理临时文件
                     try:
                         if os.path.exists(temp_file_path):
                             os.remove(temp_file_path)
                     except Exception as cleanup_error:
                         logger.warning(f"清理临时文件失败: {str(cleanup_error)}")
-                    
+
                     # 返回已存在的文档信息
                     response_serializer = PDFDocumentSerializer(existing_document)
                     return Response({
@@ -126,17 +125,29 @@ class PDFUploadView(APIView):
                         'duplicate': True,
                         'existing_document_id': existing_document.id
                     }, status=status.HTTP_200_OK)
-                    
+
             except Exception as hash_error:
                 logger.warning(f"计算文件哈希失败: {str(hash_error)}")
                 file_hash = None
-            
-            # 获取Milvus连接对象
+
+            # 获取Milvus连接对象 - 使用数据库中的第一条活跃连接
             try:
-                milvus_connection = MulvesConnection.objects.get(id=milvus_connection_id, is_active=True)
-            except MulvesConnection.DoesNotExist:
-                raise ValueError(f"无效的Milvus连接ID: {milvus_connection_id}")
-            
+                # 获取第一条活跃的Milvus连接配置
+                connection_config = MulvesConnection.objects.filter(is_active=True).first()
+                if not connection_config:
+                    raise ValueError("没有可用的Milvus连接配置")
+                
+                logger.info(f"使用Milvus连接配置: {connection_config.name}")
+                
+                # 动态建立新的Milvus连接（使用上下文管理器确保自动释放）
+                from apps.mulvesdb.connectors import MulvesDBConnector
+                milvus_connector = MulvesDBConnector(connection_config)
+                milvus_connector.connect_sync()
+                logger.info("成功建立Milvus连接")
+                
+            except Exception as e:
+                raise ConnectionError(f"建立Milvus连接失败: {str(e)}")
+
             # 创建PDF文档记录
             pdf_document = PDFDocument.objects.create(
                 title=title,
@@ -144,37 +155,45 @@ class PDFUploadView(APIView):
                 file_size=uploaded_file.size,
                 file_hash=file_hash,  # 添加哈希值
                 page_count=0,  # 后续处理时更新
-                milvus_connection=milvus_connection,
+                milvus_connection=connection_config,  # 使用配置对象
                 collection_name=resolved_collection_name,
                 status='uploaded'
             )
-            
-            # 同步处理PDF文档
-            pipeline = PDFProcessingPipeline(milvus_connection_id)
+
+            # 同步处理PDF文档 - 传递connector对象
+            pipeline = PDFProcessingPipeline(connection_config.id, milvus_connector)  # 修改构造函数
             try:
-                logger.info(f"开始处理PDF文档，连接ID: {milvus_connection_id}")
+                logger.info(f"开始处理PDF文档，连接ID: {connection_config.id}")
                 logger.info(f"使用的集合名称: {resolved_collection_name}")
                 # 使用现有的集合而不是创建新的
                 result = pipeline.process_pdf_document(pdf_document, temp_file_path, use_existing_collection=True)
                 logger.info(f"PDF处理完成: {result}")
-                
+
                 # 更新文档状态为已完成
                 pdf_document.status = 'completed'
                 pdf_document.page_count = result.get('pages_processed', 0)
                 pdf_document.save(update_fields=['status', 'page_count'])
-                
+
             except Exception as e:
                 logger.error(f"PDF处理失败: {str(e)}")
                 pdf_document.mark_as_failed(str(e))
                 raise
             finally:
-                # 清理临时文件
+                # 清理临时文件和断开连接
                 try:
                     if os.path.exists(temp_file_path):
                         os.remove(temp_file_path)
                 except Exception as cleanup_error:
                     logger.warning(f"清理临时文件失败: {str(cleanup_error)}")
-            
+                
+                # 自动释放Milvus连接
+                try:
+                    if 'milvus_connector' in locals():
+                        milvus_connector.disconnect_sync()
+                        logger.info("Milvus连接已自动释放")
+                except Exception as disconnect_error:
+                    logger.warning(f"断开Milvus连接时出错: {str(disconnect_error)}")
+
             # 返回初始响应
             response_serializer = PDFDocumentSerializer(pdf_document)
             return Response({

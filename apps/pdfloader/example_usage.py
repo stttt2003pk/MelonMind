@@ -202,7 +202,6 @@ Content-Type: multipart/form-data
 Form Data:
 - title: "我的文档"
 - file: [PDF文件]
-- milvus_connection_id: 1
 - collection_name: "my_collection"
         """,
         

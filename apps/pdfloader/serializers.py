@@ -64,7 +64,6 @@ class PDFUploadSerializer(serializers.Serializer):
     
     title = serializers.CharField(max_length=500, required=True)
     file = serializers.FileField(required=True)
-    milvus_connection_id = serializers.IntegerField(required=True)
     collection_config_id = serializers.IntegerField(required=False, help_text="预定义集合配置ID")
     collection_name = serializers.CharField(max_length=100, required=False, help_text="自定义集合名称（不推荐）")
     
