@@ -246,8 +246,8 @@ class PDFVectorStorageServiceWithConnector:
                         document_id=document_id,
                         chunk_index=chunk['chunk_index'],
                         vector_id=chunk['vector_id'],
-                        embedding_model=self.embedding_service.get_model_name(),
-                        embedding_provider=self.embedding_service.get_provider_name()
+                        # embedding_model=self.embedding_service.get_model_name(),
+                        # embedding_provider=self.embedding_service.get_provider_name()
                     )
                     for chunk in successful_chunks
                 ]

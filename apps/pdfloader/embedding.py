@@ -35,7 +35,7 @@ class QwenEmbeddingService:
         self.api_key = api_key or getattr(settings, 'QWEN_API_KEY', os.getenv('QWEN_API_KEY'))
         self.base_url = base_url or getattr(settings, 'QWEN_BASE_URL', 'https://dashscope.aliyuncs.com/compatible-mode/v1')
         self.model = model
-        self.dimensions = 128  # Qwen默认维度
+        self.dimensions = 1536  # Qwen默认维度
         
         if not self.api_key:
             raise ValueError("Qwen API密钥未配置，请设置QWEN_API_KEY环境变量或在settings中配置")
@@ -182,7 +182,7 @@ class QwenEmbeddingService:
 class MockEmbeddingService:
     """Mock Embedding服务（用于测试）"""
     
-    def __init__(self, dimensions: int = 128):
+    def __init__(self, dimensions: int = 1536):
         self.dimensions = dimensions
     
     def embed_text(self, text: str, **kwargs) -> EmbeddingResult:

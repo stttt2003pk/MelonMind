@@ -72,7 +72,7 @@ class PDFDocument(models.Model):
     def get_by_file_hash(cls, file_hash):
         """根据文件哈希值查找文档"""
         try:
-            return cls.objects.get(file_hash=file_hash)
+            return cls.objects.get(file_hash=file_hash, status='completed')
         except cls.DoesNotExist:
             return None
     
